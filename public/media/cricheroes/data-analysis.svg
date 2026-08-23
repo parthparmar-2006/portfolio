@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img" aria-label="Placeholder: match data analysis view with charts across a season dataset">
+  <rect width="1600" height="900" fill="#FCF8F1"/>
+  <rect x="0" y="0" width="1600" height="76" fill="#2F6B47"/>
+  <text x="64" y="48" font-family="ui-sans-serif, system-ui" font-size="24" fill="#EAF3ED">Match analysis</text>
+
+  <!-- filter chips -->
+  <g font-family="ui-monospace, monospace" font-size="15">
+    <rect x="64" y="120" width="140" height="38" rx="19" fill="#2F6B47"/><text x="90" y="145" fill="#EAF3ED">all seasons</text>
+    <rect x="220" y="120" width="128" height="38" rx="19" fill="#F7F1E6" stroke="#DED2BE" stroke-width="2"/><text x="248" y="145" fill="#6B6155">chases</text>
+    <rect x="364" y="120" width="150" height="38" rx="19" fill="#F7F1E6" stroke="#DED2BE" stroke-width="2"/><text x="390" y="145" fill="#6B6155">death overs</text>
+    <rect x="530" y="120" width="128" height="38" rx="19" fill="#F7F1E6" stroke="#DED2BE" stroke-width="2"/><text x="558" y="145" fill="#6B6155">powerplay</text>
+  </g>
+
+  <!-- run rate over overs -->
+  <rect x="64" y="192" width="920" height="336" rx="14" fill="#F7F1E6" stroke="#DED2BE" stroke-width="2"/>
+  <text x="96" y="238" font-family="ui-sans-serif, system-ui" font-size="20" fill="#2B2620">Required rate vs. scoring rate</text>
+  <g stroke="#DED2BE" stroke-width="1.5" opacity="0.6">
+    <line x1="112" y1="300" x2="944" y2="300"/><line x1="112" y1="368" x2="944" y2="368"/>
+    <line x1="112" y1="436" x2="944" y2="436"/>
+  </g>
+  <line x1="112" y1="480" x2="944" y2="480" stroke="#DED2BE" stroke-width="2"/>
+  <path d="M112 452 L216 430 L320 416 L424 384 L528 392 L632 344 L736 320 L840 276 L944 288"
+        fill="none" stroke="#2F6B47" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M112 440 L216 444 L320 428 L424 432 L528 408 L632 400 L736 372 L840 356 L944 320"
+        fill="none" stroke="#9A4A1E" stroke-width="4.5" stroke-dasharray="10 8" stroke-linecap="round"/>
+  <g font-family="ui-monospace, monospace" font-size="14" fill="#9A8F80">
+    <text x="112" y="506">1</text><text x="520" y="506">10</text><text x="928" y="506">20</text>
+  </g>
+
+  <!-- pressure distribution donut -->
+  <rect x="1016" y="192" width="520" height="336" rx="14" fill="#F7F1E6" stroke="#DED2BE" stroke-width="2"/>
+  <text x="1048" y="238" font-family="ui-sans-serif, system-ui" font-size="20" fill="#2B2620">Pressure bands</text>
+  <g fill="none" stroke-width="42">
+    <circle cx="1200" cy="380" r="92" stroke="#DED2BE"/>
+    <circle cx="1200" cy="380" r="92" stroke="#2F6B47" stroke-dasharray="230 578" transform="rotate(-90 1200 380)"/>
+    <circle cx="1200" cy="380" r="92" stroke="#9A4A1E" stroke-dasharray="140 578" stroke-dashoffset="-230" transform="rotate(-90 1200 380)"/>
+    <circle cx="1200" cy="380" r="92" stroke="#8A5E13" stroke-dasharray="96 578" stroke-dashoffset="-370" transform="rotate(-90 1200 380)"/>
+  </g>
+  <g font-family="ui-monospace, monospace" font-size="15" fill="#6B6155">
+    <rect x="1340" y="320" width="16" height="16" rx="4" fill="#2F6B47"/><text x="1366" y="334">low</text>
+    <rect x="1340" y="356" width="16" height="16" rx="4" fill="#9A4A1E"/><text x="1366" y="370">high</text>
+    <rect x="1340" y="392" width="16" height="16" rx="4" fill="#8A5E13"/><text x="1366" y="406">extreme</text>
+  </g>
+
+  <!-- table -->
+  <rect x="64" y="568" width="1472" height="268" rx="14" fill="#F7F1E6" stroke="#DED2BE" stroke-width="2"/>
+  <g font-family="ui-monospace, monospace" font-size="14" letter-spacing="2" fill="#9A8F80">
+    <text x="96" y="612">MATCH</text><text x="500" y="612">SITUATION</text>
+    <text x="900" y="612">RAW</text><text x="1120" y="612">IMPACT</text><text x="1360" y="612">DELTA</text>
+  </g>
+  <line x1="96" y1="628" x2="1504" y2="628" stroke="#DED2BE" stroke-width="2"/>
+  <g font-family="ui-sans-serif, system-ui" font-size="18" fill="#2B2620">
+    <text x="96" y="670">Match 214</text><text x="500" y="670" fill="#6B6155">chase, 4 down</text>
+    <text x="900" y="670">62 (41)</text><text x="1120" y="670" fill="#2F6B47">94.2</text><text x="1360" y="670" fill="#2F6B47">+31</text>
+    <text x="96" y="722">Match 189</text><text x="500" y="722" fill="#6B6155">set, 1 down</text>
+    <text x="900" y="722">88 (52)</text><text x="1120" y="722" fill="#2F6B47">71.4</text><text x="1360" y="722" fill="#9A4A1E">−17</text>
+    <text x="96" y="774">Match 173</text><text x="500" y="774" fill="#6B6155">death, 6 down</text>
+    <text x="900" y="774">31 (14)</text><text x="1120" y="774" fill="#2F6B47">83.6</text><text x="1360" y="774" fill="#2F6B47">+44</text>
+  </g>
+  <line x1="96" y1="692" x2="1504" y2="692" stroke="#DED2BE" stroke-width="1.5" opacity="0.6"/>
+  <line x1="96" y1="744" x2="1504" y2="744" stroke="#DED2BE" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- placeholder watermark -->
+  <g font-family="ui-monospace, monospace" font-size="18" letter-spacing="3">
+    <rect x="1334" y="118" width="196" height="38" rx="19" fill="#2B2620" fill-opacity="0.08"/>
+    <text x="1358" y="143" fill="#9A8F80">PLACEHOLDER</text>
+  </g>
+</svg>

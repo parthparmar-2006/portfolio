@@ -1,0 +1,139 @@
+---
+title: "No-Code Data Analysis Tool"
+summary: "Upload a messy spreadsheet, pick columns, get real analysis — built so a non-technical team could stop asking an engineer to run pandas for them."
+lens: "Systems"
+year: "2025"
+period: "May 2025 — Jun 2025"
+highlights:
+  - "Built an end-to-end analysis pipeline in React that parses multi-sheet Excel files in the browser and returns descriptive statistics, distributions and correlations without an upload step."
+  - "Replaced a string-length heuristic for column typing that silently classified real measurements as categorical, so a Fare column got a frequency table instead of a mean."
+  - "Hardened the one server-side endpoint behind Zod validation, IP rate limiting and an abort-controller timeout, mapping upstream failures to real status codes instead of returning provider errors as 500s."
+order: 4
+accent: "amber"
+role: "End-to-end — analysis pipeline, API, interface"
+stack: ["React", "TypeScript", "Plotly.js", "SheetJS", "Express", "Zod"]
+repo: "https://github.com/parthparmar-2006/Data-Analysis-Tool"
+cover: "/media/covers/no-code-analysis-tool.png"
+coverAlt: "A messy spreadsheet resolved into typed columns and charts."
+metrics:
+  - value: "10,000+"
+    label: "Rows per dataset"
+  - value: "3"
+    label: "Inferred column types"
+  - value: "13"
+    label: "Edge-case fixtures"
+---
+
+Most "data analysis" inside a small organisation is one person who knows pandas, and a queue of
+people waiting on them. This tool was an attempt to remove that person from the critical path
+without pretending the analysis is trivial.
+
+## The problem
+
+A non-technical user has a spreadsheet and a question. The gap between those two things is currently
+a Python script. Closing that gap means the tool has to make decisions the user cannot: what type is
+this column really, which summary is meaningful for it, and does a correlation here mean anything.
+
+## Constraints
+
+- **The input is hostile in a boring way.** Real spreadsheets have merged headers, blank rows, dates
+  stored as text, numbers stored as text with separators, duplicate column names, and a "Total" row
+  at the bottom that will silently ruin every aggregate.
+- **The user cannot debug it.** There is no stack trace to read and nobody to read it. A failure has
+  to be explained in terms of the data, not the code.
+- **Everything runs in the browser.** Parsing and statistics happen client-side, so there is no
+  upload step and no server holding anyone's spreadsheet. The only thing that leaves the machine is
+  a short prompt containing the finished numbers.
+
+## Approach
+
+<Flow steps={[
+  { label: "Parse", detail: "SheetJS reads the workbook in the browser, dates included, across every sheet." },
+  { label: "Profile", detail: "Each column is sampled and classified as Date, Numeric or Categorical by majority vote." },
+  { label: "Select", detail: "The user picks one column or several; only analyses that suit those types are offered." },
+  { label: "Analyse", detail: "Mean, median and standard deviation for numeric columns, frequencies for categorical, correlation for pairs." },
+  { label: "Narrate", detail: "The finished numbers — never the raw data — are sent to a model to be explained in a sentence." },
+  { label: "Export", detail: "Charts and findings out as PDF, since the output has to leave the tool to be useful." }
+]} />
+
+The principle throughout is that **the model never touches the arithmetic**. Every statistic is
+computed deterministically in JavaScript; the language model is handed the finished numbers and asked
+to describe them. That boundary is what makes the tool trustworthy — a model asked to compute a
+correlation will produce a plausible number, and a plausible number is worse than no number.
+
+## The hard decision
+
+<Tradeoff chose="Type inference from value shape" over="A string-length heuristic">
+  The original rule classified a column by how long its rendered values were: roughly, five to ten
+  characters meant identifier, anything else was a quantity.
+
+  It is fast, it is one line, and it is wrong in a way you cannot see. `"4823.45"` is seven
+  characters, so a Fare column became categorical and got a frequency table with thousands of unique
+  values instead of a mean and a standard deviation. It was magnitude-dependent too — `7.25` counted
+  as a quantity while `112.5` did not.
+
+  The replacement keys off the properties that actually separate the two. Identifiers are integers,
+  unsigned, and often zero-padded — which is only observable *before* the value is coerced to a
+  number. Anything carrying a fractional part, a minus sign or exponent notation is a quantity. A
+  name pattern catches the rest: `id`, `code`, `zip`, `phone`, `account` and their variants.
+
+  It costs a sampling pass and a pile of edge cases. It was worth it because the alternative failure
+  is invisible: a wrong type does not error, it produces a confident, meaningless analysis, and the
+  user has no way to tell.
+</Tradeoff>
+
+## Hardening the one part that leaves the browser
+
+The AI endpoint is the only server-side surface, and the first version was naive in three specific
+ways worth naming, because they are the default failure modes of any "just call the API"
+integration:
+
+- **No timeout.** Node's `fetch` has none by default, so a stalled upstream burned the whole function
+  budget until the platform killed it. It now runs behind an `AbortController` with a configurable
+  deadline and returns a `504`.
+- **No status mapping.** Any non-200 from the provider came back to the browser as a `500` carrying
+  the provider's raw error text, which can echo request content at the client. Upstream rate limiting
+  is now a `429`, a credential failure is a generic `500`, and the provider's body is logged rather
+  than returned.
+- **No validation in either direction.** Request bodies are checked with Zod before anything is spent
+  on them, and the provider's response is parsed against a schema rather than trusted.
+
+There is IP rate limiting in front of it, `helmet` for headers, and one documented limitation:
+IP-based limits are approximate behind shared egress. That is written down rather than papered over.
+
+## Outcome
+
+The tool takes a workbook end to end — parse, profile, select, analyse, narrate, export — with the
+statistics computed locally and only finished numbers ever sent anywhere. Column typing is exercised
+against thirteen deliberately awkward fixtures: duplicate column names, headers with no rows, a
+single row, sixty columns, mixed types, two disjoint sheets, numeric edge cases, and a 150,000-row
+file.
+
+<Figure
+  zone="wide"
+  src="/media/no-code/column-selection.png"
+  alt="Column selection interface listing detected columns with their inferred data types."
+  caption="Column selection. Inferred types drive which analyses are offered — the user is never given an option that cannot produce a meaningful result."
+/>
+
+<Figure
+  zone="wide"
+  src="/media/no-code/multi-column.png"
+  alt="Multi-column analysis view showing correlation output and generated narrative."
+  caption="Multi-column analysis. Statistics computed in the browser; the narrative is generated from the finished numbers, never in place of them."
+/>
+
+## What I would do differently
+
+- **Show the inference, and let the user correct it.** The profiler is right most of the time and
+  completely opaque when it is wrong. Surfacing "I read this as a date — change it?" would remove the
+  entire remaining class of silent-wrong-answer failures.
+- **Stream the large-file path.** The whole workbook is held in memory. There is a 150,000-row
+  fixture precisely because that is where it starts to hurt, and chunked parsing is far cheaper to
+  design in than to retrofit.
+- **Split the app file.** Parsing, typing, statistics, chart configuration and layout all live in one
+  two-thousand-line component. Everything interesting in this write-up comes from that file, which is
+  the clearest possible argument that it should not all be in there.
+- **Constrain the generated narrative harder.** It describes results correctly, but will occasionally
+  reach for causal phrasing a correlation does not support. That belongs in a template, not in a
+  request.

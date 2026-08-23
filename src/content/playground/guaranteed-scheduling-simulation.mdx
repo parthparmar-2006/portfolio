@@ -1,0 +1,31 @@
+---
+title: "Guaranteed Scheduling Simulation"
+summary: "A CPU scheduler that promises every process an equal share of the machine, then has to keep that promise. Run it and watch the guarantee hold or slip."
+demoUrl: "https://parthparmar-2006.github.io/Guaranteed-Scheduling-Simulation/"
+repoUrl: "https://github.com/parthparmar-2006/Guaranteed-Scheduling-Simulation"
+tags: ["operating systems", "scheduling"]
+accent: "blue"
+---
+
+Guaranteed scheduling makes an unusually concrete promise: with *n* processes
+running, each one should receive about 1/*n* of the CPU. The scheduler's job is
+then to keep score — track how much time each process was *entitled* to against
+how much it actually got, and always run whichever is furthest behind.
+
+## What you can do with it
+
+- Add processes with different arrival times and burst lengths.
+- Step the simulation and watch the entitled-versus-consumed ratio for each one.
+- See the scheduler pick whichever process has fallen furthest behind its share.
+
+## Why the ratio is the interesting part
+
+Most scheduling algorithms are explained by their queue behaviour — first come
+first served, shortest job first, round robin. Guaranteed scheduling is easier to
+reason about as an *accounting* problem: every process has a running balance, and
+the scheduler is a debt collector working the largest debt first.
+
+Watching the ratios converge, and seeing what happens to them when a process
+arrives late, makes the fairness claim concrete in a way the formula does not.
+It also makes the failure mode obvious: fairness over a long window says nothing
+about latency in any short one.

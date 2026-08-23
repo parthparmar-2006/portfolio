@@ -1,0 +1,154 @@
+---
+title: "CricHeroes Impact Metric"
+summary: "A player impact measure built on win probability: not how many runs you scored, but how much you moved your team's chance of winning."
+lens: "Data"
+year: "2026"
+period: "Mar 2026 — Apr 2026"
+highlights:
+  - "Scored every one of 278,205 deliveries across 1,169 IPL matches by how much it shifted the batting side's probability of winning, then attributed that shift to the players responsible."
+  - "Trained a win-probability model on ball-by-ball match state so the metric measures contribution to the result rather than accumulated volume."
+  - "Made scoring format-aware and normalised it season by season, so 768 players from different eras and conditions stay comparable."
+order: 2
+accent: "moss"
+role: "Metric design and analysis — team Tensor Titans"
+restricted: true
+restrictionNote: "Built for the CricHeroes track at HACKaMINED 2026. The exact formulation — the component weights and the scoring formulas — is not mine to publish, so this page covers the approach and the reasoning rather than the equations."
+cover: "/media/covers/cricheroes-impact-metric.png"
+coverAlt: "Identical raw scores re-weighted by the situation they were made in."
+stack: ["Python", "pandas", "NumPy", "scikit-learn", "Streamlit"]
+metrics:
+  - value: "278,205"
+    label: "Deliveries scored"
+  - value: "1,169"
+    label: "IPL matches"
+  - value: "768"
+    label: "Players ranked"
+---
+
+<Callout tone="restricted">
+  Built for the CricHeroes track at HACKaMINED 2026. The approach below is described in full; the
+  exact formulation — which components carry which weights, and the formulas that combine them — is
+  not mine to publish.
+</Callout>
+
+Cricket has more statistics than almost any other sport, and most of them share a blind spot: they
+count what a player did without asking what it was worth.
+
+## The problem
+
+A strike rate of 140 is a strike rate of 140 whether it came at 12 for 0 in a dead rubber or at 60
+for 5 chasing 180 in a final. An economy rate treats the fifteenth over of a collapse the same as the
+fifth over of a stroll. Averages weight a century from four seasons ago identically to one from last
+week.
+
+Everyone watching the match knows those things are not the same. The numbers do not.
+
+## What conventional metrics miss
+
+**Contribution to the result.** Runs and wickets are inputs; winning is the output. Traditional
+statistics measure the first and assume it tracks the second — which is why a fast 40 that wins a
+chase can score below a slow 80 in a game already lost.
+
+**Match state.** The value of a run depends on the required rate, wickets in hand, overs remaining
+and what the opposition has already done.
+
+**Format.** T20, ODI and Test cricket are different games with different scarcities. One scale across
+all three flatters whichever format it was implicitly tuned for.
+
+**Era and conditions.** Scoring rates move over time. Comparing raw numbers across seasons quietly
+compares the conditions rather than the players.
+
+**Everything that is not batting or bowling.** Box scores drop much of what decides matches —
+captaincy, partnerships, the pressure absorbed by the player who did not face the winning ball.
+
+## The approach
+
+The metric is built on **win probability added**. The unit of analysis is not the innings, it is the
+delivery.
+
+<Flow steps={[
+  { label: "Load", detail: "Ball-by-ball data for every match, cleaned and format-detected." },
+  { label: "Contextualise", detail: "Each delivery is described by its match state, plus venue and opposition strength." },
+  { label: "Model", detail: "A classifier is trained to predict the batting side's win probability from that state." },
+  { label: "Difference", detail: "Every ball produces a before-and-after win probability. The change is what the ball was worth." },
+  { label: "Attribute", detail: "That change is assigned to the players responsible — batter, bowler, and the partnership around them." },
+  { label: "Normalise", detail: "Scores are rescaled season by season and per format, so eras and formats stay comparable." }
+]} />
+
+The idea itself is borrowed — win probability added has been standard in baseball analytics for
+years. What made it interesting here is that cricket gives you a much richer state to condition on,
+and a much less forgiving one: an over is six discrete events, a chase has a hard deadline, and the
+same score means opposite things depending on how many wickets are left.
+
+### Why the model exists at all
+
+You do not need machine learning to say that a wicket at 60 for 5 matters more than one at 200 for 2.
+You need it to say *how much* more, consistently, across a quarter of a million deliveries — and to
+have that answer come from what actually happened in similar situations rather than from someone's
+intuition about them.
+
+That is the whole role of the model here. It is not predicting matches. It is providing a
+defensible, data-derived answer to "what were this team's chances a moment ago, and what are they
+now" so that the difference can be attributed to a player.
+
+## The hard decision
+
+<Tradeoff chose="Legibility" over="Raw predictive accuracy">
+  A more expressive model would have produced sharper win probabilities. We deliberately did not
+  chase that.
+
+  A metric a coach or a fan cannot interrogate does not get used, no matter how good it is. The value
+  of this number is that you can hold it up next to an innings and argue about it — which means the
+  chain from "this ball happened" to "this player scored 88" has to stay followable by a person.
+
+  The cost is real: we left accuracy on the table, and the model is not the state of the art it could
+  have been. The judging feedback made me think it was the right call — what they responded to was
+  that the metric was *legible*, that you could look at a score, look at the innings, and agree.
+  That is a harder property to hit than accuracy, and it is the one that decides whether a metric is
+  ever used.
+</Tradeoff>
+
+## Outcome
+
+**First place in the CricHeroes track at HACKaMINED 2026**, a national-level hackathon, with team
+Tensor Titans.
+
+The finished system scores 278,205 deliveries across 1,169 IPL matches and produces per-format
+rankings for 768 players, presented through a dashboard rather than a raw column of numbers —
+because the argument the metric makes is only convincing when you can see the innings it is making it
+about.
+
+<Figure
+  zone="wide"
+  src="/media/cricheroes/dashboard-overview.png"
+  alt="Dashboard hero view of the impact metric project."
+  caption="The dashboard's overview. The metric is the point, but it only lands when a reader can drill into the performance behind a score."
+/>
+
+<Figure
+  zone="wide"
+  src="/media/cricheroes/data-analysis.png"
+  alt="Match data analysis view with charts across a season of matches."
+  caption="Match-level analysis. Aggregate views exist to give the per-player scores something to be read against."
+/>
+
+<Figure
+  zone="wide"
+  src="/media/cricheroes/player-analysis.png"
+  alt="In-depth single player analysis view."
+  caption="Per-player breakdown — where a single impact score decomposes back into the individual performances that produced it."
+/>
+
+## What I would do differently
+
+- **Validate against disagreement, not agreement.** We sanity-checked outputs against performances we
+  already believed were impressive, which mostly confirms that the metric is not broken. The real
+  test is where it disagrees with consensus and turns out to be right.
+- **Hold out a season.** The win-probability model was trained and applied over the same body of
+  matches. Keeping a season back would have said something about whether it generalises, rather than
+  whether it fits.
+- **Design the sensitivity analysis up front.** With a hackathon clock, the weighting choices got far
+  less stress-testing than they deserved. How much the output moves when a weight moves should not be
+  an afterthought — it is the difference between a metric and a number.
+- **Separate the metric from the presentation earlier.** The dashboard and the scoring grew together,
+  which made it harder than it should have been to change one without disturbing the other.

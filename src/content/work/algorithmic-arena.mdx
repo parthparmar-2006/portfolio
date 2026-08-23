@@ -1,0 +1,144 @@
+---
+title: "Algorithmic Arena"
+summary: "An online judge that compiles and runs untrusted code from strangers, inside a container that is assumed hostile, and returns a verdict in seconds."
+lens: "Systems"
+year: "2025"
+period: "Aug 2025 — Nov 2025"
+highlights:
+  - "Built an online judge in Spring Boot that compiles and executes untrusted C++ inside a disposable Docker container per submission, with no network, 256MB of memory, one CPU and a 64-process cap."
+  - "Enforced the wall clock from outside the sandbox: the supervising process kills the container at 30 seconds rather than trusting the submission to stop itself."
+  - "Serialised execution behind a single worker consuming a blocking queue, so submissions never contend for the host and verdicts stay deterministic."
+order: 3
+accent: "rust"
+role: "Solo — design, backend, infrastructure"
+stack: ["Java", "Spring Boot", "PostgreSQL", "Docker", "JWT", "Spring Security"]
+repo: "https://github.com/parthparmar-2006/algorithmic-arena"
+cover: "/media/covers/algorithmic-arena.png"
+coverAlt: "Submission pipeline: queue, isolated runners, verdict."
+metrics:
+  - value: "1 / submission"
+    label: "Isolated container"
+  - value: "256 MB"
+    label: "Memory ceiling per run"
+  - value: "5"
+    label: "Verdict states"
+---
+
+Every competitive programming site solves the same uncomfortable problem: a stranger sends you a
+program, and you run it. Not analyse it, not sandbox it in a language VM — actually execute it, on
+your hardware, with a compiler. Algorithmic Arena is my version of that system.
+
+## The problem
+
+An online judge accepts a source file and a problem ID, and must return one of a small set of
+verdicts — accepted, wrong answer, time limit exceeded, memory limit exceeded, runtime error —
+quickly enough that a contestant will keep using it.
+
+The submission is adversarial by definition. It may loop forever. It may allocate until the host
+swaps. It may fork bombs, open sockets, read `/etc/passwd`, or write into the directory where the
+next submission is about to be compiled. None of that is exotic; it is the first thing anyone tries.
+
+## Constraints
+
+- **The runner is untrusted, the platform is not.** A malicious submission must not be able to reach
+  the database, the network, or another submission's files.
+- **Verdicts must be deterministic.** The same submission against the same test data has to produce
+  the same verdict, or the judge is worthless for contests.
+- **Latency is user-facing.** Submit-to-verdict is the loop a contestant lives in. Correctness that
+  arrives a minute later is a different product.
+- **Solo project, real hardware.** No Kubernetes, no cluster. Whatever isolation exists has to come
+  from primitives available on one machine.
+
+## Approach
+
+<Flow steps={[
+  { label: "Submit", detail: "Authenticated POST — source, language, problem ID. Persisted before anything runs." },
+  { label: "Queue", detail: "Submission goes onto a blocking queue rather than executing inline." },
+  { label: "Compile", detail: "Inside a throwaway container. Compile errors short-circuit the run." },
+  { label: "Execute", detail: "Once per test case: 256 MB, one CPU, 64 processes, no network, 30 s hard ceiling." },
+  { label: "Compare", detail: "Trailing-whitespace-tolerant diff against expected output." },
+  { label: "Verdict", detail: "First failure wins and stops the run; the result is written back and polled by the client." }
+]} />
+
+The core decision is that **the container is the security boundary, and it is disposable**. Each
+submission gets its own workspace directory and its own container, both destroyed when the run
+finishes, so there is no persistent state for one submission to leave behind for the next.
+
+The limits are container flags rather than anything the program can negotiate with:
+
+```bash
+docker run --rm --network=none --memory=256m --pids-limit=64 --cpus=1 \
+  -v <workspace>:/app arena-sandbox source.cpp input.txt
+```
+
+Wall-clock timeout is enforced from *outside* the container, by the supervising process that started
+it: thirty seconds, then the process is destroyed forcibly. A program that spins does not get to
+decide when it stops.
+
+### Why the queue exists
+
+The obvious implementation runs the submission inside the HTTP request. That works until two people
+submit at once. Container spin-up is not free, and unbounded concurrency turns a burst of
+submissions into a machine that is thrashing rather than judging — every submission slows down
+together, and the ones that would have passed start timing out on a loaded host, which breaks
+determinism.
+
+So submissions go onto a blocking queue and a **single worker thread** drains it. Concurrency is
+capped at one by construction, which is the crudest possible answer and the correct one for a first
+version: it makes contention impossible rather than merely unlikely. The API returns immediately
+with a submission ID that the client polls.
+
+<Callout>
+  One worker is also the cheapest way to be certain the isolation story holds. Every claim about
+  what a submission can reach becomes much harder to reason about the moment two of them are running
+  at once, and I would rather add concurrency after there is a test suite that proves the boundary
+  than before.
+</Callout>
+
+## The hard decision
+
+<Tradeoff chose="A container per submission" over="A long-lived pool of warm sandboxes">
+  Reusing a warm container is meaningfully faster — you skip image start-up on every submission,
+  which is the single largest fixed cost in the pipeline.
+
+  I rejected it anyway. Reuse means the isolation boundary has to be re-established *inside* a
+  process that already ran hostile code, and getting that wrong is silent: the judge keeps
+  returning verdicts, they are just no longer trustworthy. A slower judge is a fixable problem. A
+  judge that leaks state between submissions is a broken one, and you find out from a contestant.
+
+  The cost is real and I would revisit it with a pool of pre-warmed containers that are
+  <em>discarded after a single use</em> — warm start, no reuse. That gets most of the latency back
+  without weakening the boundary.
+
+</Tradeoff>
+
+## Outcome
+
+The system does what an online judge has to do: it accepts a C++ submission, runs it against every
+test case under enforced limits, and returns one of five verdicts — accepted, wrong answer,
+compilation error, time limit exceeded, runtime error — stopping at the first failure. Comparison
+trims trailing whitespace on both sides. Authentication is JWT-based, submissions and verdicts are
+persisted in PostgreSQL, and the whole thing runs on a single host.
+
+<Callout tone="note" title="Benchmarks">
+  Throughput and p95 submit-to-verdict numbers are being measured properly — under a repeatable load
+  script rather than by hand — before I publish them. Numbers you cannot reproduce are decoration.
+</Callout>
+
+## What I would do differently
+
+- **Measure from day one.** I built the pipeline before I instrumented it, so the tuning I did on
+  container limits was informed by intuition instead of a latency histogram. Metrics first is the
+  cheapest change on this list.
+- **Support more than one language.** It compiles C++ and only C++ — the source file is written as
+  `source.cpp` and handed to a sandbox image that expects exactly that. Language support is a
+  parameter the design has not been asked for yet.
+- **Move the runner off the API host.** Right now the worker and the API share a machine and a JVM.
+  They have completely different failure profiles; the API should stay up while runners are being
+  hammered.
+- **Make the queue durable and bounded.** It is an in-memory `LinkedBlockingQueue`: unbounded, so a
+  flood is accepted rather than rejected, and lost entirely if the host restarts mid-contest. The
+  submission row already exists in PostgreSQL — the queue should be recoverable from it.
+- **Test the isolation adversarially.** I reasoned about fork bombs and network access. I did not
+  write a suite of hostile submissions and run it in CI, which is the only way that reasoning stays
+  true as the code changes.

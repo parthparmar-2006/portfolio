@@ -1,0 +1,561 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Palette.
+
+   Every token is written once with `light-dark()`, which resolves against the
+   element's computed `color-scheme`. That means the OS preference and the
+   in-app toggle share one definition instead of duplicating the palette under
+   `prefers-color-scheme` and again under `[data-theme]`.
+
+   Values are OKLCH. Light-mode accents sit at L 0.46-0.52 and dark-mode
+   accents at L 0.72-0.80, which is what keeps every accent above 4.5:1 against
+   its own ground in both themes.
+   --------------------------------------------------------------------------- */
+:root {
+  color-scheme: light dark;
+
+  /* Surfaces + text. Warm cream / warm charcoal. Never #fff, never #000. */
+  --ground:      light-dark(oklch(0.968 0.014 85),  oklch(0.190 0.012 62));
+  --panel:       light-dark(oklch(0.940 0.019 82),  oklch(0.232 0.014 62));
+  --panel-high:  light-dark(oklch(0.988 0.008 85),  oklch(0.268 0.014 64));
+  --ink:         light-dark(oklch(0.240 0.015 60),  oklch(0.940 0.010 85));
+  --ink-muted:   light-dark(oklch(0.470 0.014 60),  oklch(0.735 0.012 80));
+  --ink-faint:   light-dark(oklch(0.620 0.012 62),  oklch(0.560 0.012 75));
+  --rule:        light-dark(oklch(0.880 0.016 78),  oklch(0.320 0.014 65));
+  --rule-strong: light-dark(oklch(0.800 0.020 78),  oklch(0.400 0.016 65));
+
+  /* The four accents. One per section and per project, so scrolling varies. */
+  --rust:        light-dark(oklch(0.470 0.140 38),  oklch(0.745 0.130 42));
+  --rust-tint:   light-dark(oklch(0.940 0.032 42),  oklch(0.268 0.042 38));
+  --blue:        light-dark(oklch(0.460 0.130 258), oklch(0.750 0.110 255));
+  --blue-tint:   light-dark(oklch(0.943 0.028 258), oklch(0.265 0.040 258));
+  --moss:        light-dark(oklch(0.450 0.095 152), oklch(0.740 0.100 152));
+  --moss-tint:   light-dark(oklch(0.940 0.028 152), oklch(0.262 0.036 152));
+  --amber:       light-dark(oklch(0.510 0.125 72),  oklch(0.800 0.130 82));
+  --amber-tint:  light-dark(oklch(0.945 0.038 78),  oklch(0.268 0.044 72));
+
+  /* Sections and cards override --accent locally; every accent utility reads
+     through this indirection, so a new project only has to set one variable. */
+  --accent: var(--rust);
+  --accent-tint: var(--rust-tint);
+
+  /* Layout. The reading measure is a variable because the canvas grid and the
+     prose block both have to agree on it. */
+  /* Header height is consumed by the sticky header, the reading-progress bar,
+     scroll-padding and every sticky rail. One number, one place. */
+  --header-h: 4rem;
+
+  --measure: 68ch;
+  --margin-col: 13rem;
+  --gutter: 1.5rem;
+}
+
+/* The in-app toggle only has to change color-scheme; light-dark() does the
+   rest. `data-theme` is set on <html> before paint by an inline script. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+/* ---------------------------------------------------------------------------
+   Tailwind theme.
+
+   `inline` matters here: it compiles `text-accent` to `color: var(--accent)`
+   rather than freezing the :root value into the utility. That is what lets a
+   section re-tint its whole subtree by setting --accent on one wrapper.
+   --------------------------------------------------------------------------- */
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --color-ground: var(--ground);
+  --color-panel: var(--panel);
+  --color-panel-high: var(--panel-high);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+
+  --color-rust: var(--rust);
+  --color-rust-tint: var(--rust-tint);
+  --color-blue: var(--blue);
+  --color-blue-tint: var(--blue-tint);
+  --color-moss: var(--moss);
+  --color-moss-tint: var(--moss-tint);
+  --color-amber: var(--amber);
+  --color-amber-tint: var(--amber-tint);
+
+  --color-accent: var(--accent);
+  --color-accent-tint: var(--accent-tint);
+
+  /* Display scale, assigned per page archetype rather than per page. Before
+     this existed, eight of eleven page titles used the same clamp and every
+     page opened identically. */
+  --text-hero: clamp(2.6rem, 5.6vw, 4.25rem);
+  --text-hero--line-height: 0.98;
+  --text-title: clamp(2.6rem, 6vw, 4.5rem);
+  --text-title--line-height: 1;
+  --text-section: clamp(2.2rem, 5vw, 3.6rem);
+  --text-section--line-height: 1.04;
+  --text-utility: clamp(1.9rem, 4vw, 2.8rem);
+  --text-utility--line-height: 1.1;
+
+  --text-base: 1.0625rem;
+  --default-transition-duration: 200ms;
+}
+
+@layer base {
+  html {
+    /* Deliberately NOT `scroll-behavior: smooth`. A global smooth scroller
+       breaks Next's scroll-to-top on route change: the router's jump to 0
+       becomes an animated scroll that races its own inline style reset, so
+       navigating home from halfway down a page landed wherever you were
+       roughly half the time. Smooth is applied per-click in the table of
+       contents instead, where it is actually wanted. */
+
+    /* Keep anchor targets clear of the sticky header. */
+    scroll-padding-top: calc(var(--header-h) + 2rem);
+  }
+
+  body {
+    background-color: var(--ground);
+    color: var(--ink);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--accent-tint);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Fraunces reads stiff at its defaults; SOFT rounds the terminals and WONK
+     brings in the alternate glyphs. Applied wherever the display face is used
+     so headings never have to repeat it. */
+  .font-display {
+    font-variation-settings: "SOFT" 40, "WONK" 1;
+    letter-spacing: -0.018em;
+  }
+
+  h1, h2, h3, h4 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+}
+
+/* ---------------------------------------------------------------------------
+   The canvas grid.
+
+   Named lines, so a child picks a zone with one class instead of every page
+   inventing a max-width. This is what makes full-bleed figures, margin notes
+   and the sticky case-study rail possible at all.
+
+     bleed | wide | text | wide | bleed
+   --------------------------------------------------------------------------- */
+@layer components {
+  .canvas {
+    display: grid;
+    grid-template-columns:
+      [bleed-start] minmax(var(--gutter), 1fr)
+      [wide-start] minmax(0, var(--margin-col))
+      [text-start] minmax(0, var(--measure))
+      [text-end] minmax(0, var(--margin-col))
+      [wide-end] minmax(var(--gutter), 1fr)
+      [bleed-end];
+    align-content: start;
+  }
+
+  /* Anything that does not ask for a zone reads as body text. */
+  .canvas > * { grid-column: text; }
+
+  .col-text   { grid-column: text; }
+  .col-wide   { grid-column: wide; }
+  .col-bleed  { grid-column: bleed; }
+  /* Side notes live in the right-hand margin on desktop. */
+  .col-margin { grid-column: text-end / wide-end; }
+  /* The left margin, for sticky rails and marginalia that lead the text. */
+  .col-rail   { grid-column: wide-start / text-start; }
+
+  /* Below 1024px the margins collapse and everything is one column. No
+     component needs a breakpoint of its own for this to work. */
+  @media (max-width: 1023px) {
+    .canvas {
+      --margin-col: 0rem;
+      --gutter: 1.25rem;
+    }
+    .col-margin,
+    .col-rail { grid-column: text; }
+  }
+
+  /* An article body is a canvas nested inside the sticky-rail column, so its
+     `bleed` is the width of that column rather than the viewport — which is
+     what you want next to a rail. Narrower margins, no outer gutter, since the
+     parent zone already supplies one. */
+  .canvas-article {
+    --gutter: 0rem;
+    --margin-col: 5rem;
+  }
+  @media (max-width: 1023px) {
+    .canvas-article { --margin-col: 0rem; }
+  }
+}
+
+@layer utilities {
+  /* Section grounds: a tinted panel that inherits whatever --accent is set. */
+  .bg-accent-wash {
+    background-color: var(--accent-tint);
+  }
+
+  /* A whole page tinted toward its accent, so a case study reads as *its*
+     colour rather than as generic cream. Low mix — it should register as
+     warmth, not as a coloured page. */
+  .ground-tinted {
+    background-color: color-mix(in oklch, var(--accent-tint) 55%, var(--ground));
+  }
+
+  /* Hairline rule that reads as structure, not as a border. */
+  .rule-t { border-top: 1px solid var(--rule); }
+  .rule-b { border-bottom: 1px solid var(--rule); }
+
+  /* Underline that draws in on hover, instead of a static text-decoration. */
+  .link-draw {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size 250ms ease;
+    padding-bottom: 1px;
+  }
+  .link-draw:hover,
+  .link-draw:focus-visible {
+    background-size: 100% 1px;
+  }
+
+  /* Paper grain. A single inline SVG turbulence tile, no image request.
+     Very low opacity — it kills the flat-template feel without being seen. */
+  .grain::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Cards whose cover image grows on hover. */
+  .card-hover .card-media {
+    transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .card-hover:hover .card-media,
+  .card-hover:focus-visible .card-media {
+    transform: scale(1.04);
+  }
+
+  /* A soft accent glow that follows the pointer across a card.
+     `--mx` / `--my` are written by `usePointerGlow`, which sets them straight
+     on the node — no React state, so moving the mouse never re-renders. */
+  .card-glow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 300ms ease;
+    background: radial-gradient(
+      18rem circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in oklch, var(--accent) 22%, transparent),
+      transparent 70%
+    );
+  }
+  .card-glow:hover::before,
+  .card-glow:focus-within::before {
+    opacity: 1;
+  }
+
+  /* A hairline that draws itself in from the left when scrolled into view. */
+  .rule-draw {
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .rule-draw[data-shown="true"] {
+    transform: scaleX(1);
+  }
+
+  /* Load-time headline reveal. The text sits below a clip edge and rises into
+     it, so the motion reads as typesetting rather than a fade. */
+  /* Transform only — deliberately no opacity. The home h1 is the LCP element,
+     and fading it in from zero means the largest paint does not happen until
+     the animation ends. The glyphs are opaque from the first frame; only their
+     position moves, behind the clip edge. */
+  @keyframes text-rise {
+    from { transform: translateY(0.34em); }
+    to   { transform: translateY(0); }
+  }
+  .text-rise {
+    display: inline-block;
+    animation: text-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+/* Motion is opt-in to the user's preference, globally, in one place. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .card-hover:hover .card-media,
+  .card-hover:focus-visible .card-media { transform: none; }
+  .card-glow::before { display: none; }
+  .rule-draw { transform: scaleX(1); }
+  .text-rise { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Long-form prose (MDX case studies and posts).
+
+   `.prose-editorial` carries typography only — no max-width. The measure comes
+   from the canvas grid it sits in, which is exactly what lets a figure inside
+   prose break out to the wide or bleed zone.
+   --------------------------------------------------------------------------- */
+@layer components {
+  .prose-editorial > * + * { margin-top: 1.35em; }
+
+  .prose-editorial h2 {
+    font-family: var(--font-display), Georgia, serif;
+    font-variation-settings: "SOFT" 40, "WONK" 1;
+    font-size: 2.25rem;
+    line-height: 1.14;
+    letter-spacing: -0.022em;
+    margin-top: 2.4em;
+    margin-bottom: 0.25em;
+  }
+  .prose-editorial h3 {
+    font-family: var(--font-display), Georgia, serif;
+    font-variation-settings: "SOFT" 40, "WONK" 1;
+    font-size: 1.45rem;
+    line-height: 1.25;
+    letter-spacing: -0.012em;
+    margin-top: 2em;
+    margin-bottom: 0.15em;
+  }
+
+  /* Numbered sections, as a CSS counter rather than markup — so it applies to
+     every MDX file already written without touching one of them. */
+  .prose-numbered { counter-reset: prose-section; }
+  .prose-numbered h2::before {
+    counter-increment: prose-section;
+    content: counter(prose-section, decimal-leading-zero);
+    display: block;
+    font-family: var(--font-mono), monospace;
+    font-size: 0.72rem;
+    font-variation-settings: normal;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    margin-bottom: 0.7rem;
+  }
+
+  /* The opening paragraph of a long-form page carries more weight. */
+  .prose-editorial > p:first-of-type {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: var(--ink-muted);
+  }
+
+  .prose-editorial a {
+    color: var(--accent);
+    text-underline-offset: 3px;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in oklch, var(--accent) 40%, transparent);
+  }
+  .prose-editorial a:hover {
+    text-decoration-color: var(--accent);
+  }
+  .prose-editorial strong { font-weight: 600; }
+  .prose-editorial ul,
+  .prose-editorial ol { padding-left: 1.35rem; }
+  .prose-editorial ul { list-style: disc; }
+  .prose-editorial ol { list-style: decimal; }
+  .prose-editorial li::marker { color: var(--ink-faint); }
+  .prose-editorial li + li { margin-top: 0.4em; }
+  .prose-editorial blockquote {
+    border-left: 2px solid var(--accent);
+    padding-left: 1.1rem;
+    font-family: var(--font-display), Georgia, serif;
+    font-size: 1.2rem;
+    color: var(--ink-muted);
+  }
+  .prose-editorial hr {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin-top: 2.6em;
+    margin-bottom: 2.6em;
+  }
+  .prose-editorial :not(pre) > code {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.875em;
+    background-color: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+  }
+  .prose-editorial table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+  .prose-editorial th,
+  .prose-editorial td {
+    border-bottom: 1px solid var(--rule);
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .prose-editorial th {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+  }
+
+  /* rehype-pretty-code emits both themes; we swap by color-scheme. */
+  .prose-editorial pre {
+    background-color: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.65;
+  }
+  .prose-editorial pre code { display: grid; }
+  .prose-editorial pre code [data-line] { padding: 0 0.1rem; }
+}
+
+/* rehype-pretty-code dual-theme swap: the light theme's values are inline on
+   the span, the dark theme's are in `--shiki-dark`. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) code span {
+    color: var(--shiki-dark) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+  }
+}
+:root[data-theme="dark"] code span {
+  color: var(--shiki-dark) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+}
+
+/* Hero mesh drift. Transform-only, so it runs on the compositor. */
+@keyframes mesh-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(6%, 8%, 0) scale(1.12); }
+}
+@keyframes mesh-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50%      { transform: translate3d(-8%, 6%, 0) scale(0.94); }
+}
+@keyframes mesh-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.96); }
+  50%      { transform: translate3d(5%, -7%, 0) scale(1.1); }
+}
+.mesh-drift-a { animation: mesh-a 22s ease-in-out infinite; }
+.mesh-drift-b { animation: mesh-b 26s ease-in-out infinite; }
+.mesh-drift-c { animation: mesh-c 30s ease-in-out infinite; }
+
+/* ---------------------------------------------------------------------------
+   Print. Only /resume is meant to be printed, but these rules are safe
+   everywhere: strip the chrome, force a light ground, flatten the canvas grid
+   back to one column, and stop entries splitting across a page break.
+   --------------------------------------------------------------------------- */
+@media print {
+  :root { color-scheme: light; }
+
+  header[class*="sticky"],
+  footer,
+  .no-print,
+  .grain::after {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    font-size: 10.5pt;
+    line-height: 1.42;
+  }
+
+  main { padding: 0 !important; }
+
+  /* The grid is a screen device. On paper it is one column. */
+  .canvas { display: block !important; }
+
+  a { text-decoration: none !important; color: inherit !important; }
+
+  .resume-entry,
+  .resume-section { break-inside: avoid; page-break-inside: avoid; }
+
+  /* ---- Résumé on paper -------------------------------------------------
+     Every size in the résumé is a Tailwind `rem` value, so setting a print
+     font-size on `body` does nothing at all — the overrides below have to name
+     the elements. That is why they are `!important` rather than inherited.
+
+     Single column, deliberately: a sidebar parses badly in applicant tracking
+     systems, which read the DOM in order. The identity block becomes a
+     horizontal header instead, which costs about a third of the height. */
+
+  .resume-rail {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 0 16pt;
+    margin-bottom: 10pt;
+    padding-bottom: 6pt;
+    border-bottom: 1px solid #111;
+  }
+  .resume-rail h1 { font-size: 17pt !important; grid-column: 1; }
+  .resume-rail > p { font-size: 9pt !important; grid-column: 1; margin-top: 1pt; }
+  .resume-rail dl {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    margin-top: 0 !important;
+    text-align: right;
+  }
+  .resume-rail dl > div + div { margin-top: 2pt !important; }
+  .resume-rail dt { font-size: 6.5pt !important; }
+  .resume-rail dd { font-size: 8pt !important; line-height: 1.3 !important; }
+  /* Profiles run inline on one line rather than stacking four rows. */
+  .resume-rail dd span { display: inline !important; }
+  .resume-rail dd span + span::before { content: " · "; }
+
+  .resume { margin-top: 0 !important; }
+  .resume-section { margin-top: 9pt !important; padding-top: 3pt !important; border-top-color: #bbb !important; }
+  .resume-section:first-child { margin-top: 0 !important; padding-top: 0 !important; border-top: 0 !important; }
+  .resume-section > div { margin-top: 4pt !important; }
+  .resume-section > div > * + * { margin-top: 6pt !important; }
+  .resume h2 { font-size: 7.5pt !important; }
+  .resume h3 { font-size: 10.2pt !important; line-height: 1.25 !important; }
+  .resume p,
+  .resume li,
+  .resume dd { font-size: 9.6pt !important; line-height: 1.35 !important; }
+  .resume dt,
+  .resume .font-mono,
+  .resume-entry span { font-size: 7.8pt !important; }
+  .resume ul { margin-top: 2pt !important; }
+  .resume li + li { margin-top: 0.5pt !important; }
+
+  @page { margin: 12mm 14mm; }
+}

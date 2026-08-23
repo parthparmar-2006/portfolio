@@ -1,0 +1,36 @@
+---
+title: "Hamming Code Visualizer"
+summary: "Encode a message, flip a bit, and watch the parity checks locate the error. Built to make single-bit error correction something you can see rather than derive."
+demoUrl: "https://parthparmar-2006.github.io/Hamming-Code-Visualizer/"
+repoUrl: "https://github.com/parthparmar-2006/Hamming-Code-Visualizer"
+tags: ["error correction", "visualiser"]
+accent: "rust"
+---
+
+Hamming codes are the standard first answer to a real question: a bit flips in
+transit, and the receiver has to notice — and ideally fix it — without asking for
+the message again.
+
+The maths is short enough to fit on a slide, which is exactly the problem. You
+can follow the derivation and still not have any feel for *why* the parity bits
+sit at powers of two, or how the failing checks add up to the position of the
+corrupted bit. That is the thing this visualiser is for.
+
+## What you can do with it
+
+- Enter a message and watch the parity bits get placed and computed.
+- Flip any single bit, as a transmission error would.
+- Watch which parity checks fail, and see their positions sum to the index of
+  the bit that changed.
+
+That last step is the whole idea. The failing checks are not a lookup table —
+their positions are the binary representation of where the error is. Once you
+have watched it happen a few times, the placement at powers of two stops looking
+arbitrary.
+
+## Why it exists
+
+The step everyone gets stuck on is not the encoding — it is believing that the
+syndrome really does point straight at the broken bit. Watching it happen is
+faster than being told, and it is the kind of thing I would rather build than
+re-read.

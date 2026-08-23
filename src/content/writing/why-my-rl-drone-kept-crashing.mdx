@@ -1,0 +1,98 @@
+---
+title: "Why my RL drone kept crashing at high speed"
+summary: "The policy flew beautifully and then died on contact. The bug was not in the model — it was in which experiences the model was allowed to learn from."
+date: "2026-05-30"
+tags: ["reinforcement learning", "debugging", "ml"]
+accent: "blue"
+---
+
+For a while my drone policy had a very specific pathology. It navigated confidently, took direct
+routes, looked like it understood the environment — and then hit a wall at speed, over and over,
+in situations where slowing down was obviously available.
+
+I spent a long time treating this as a modelling problem. It was a sampling problem.
+
+## The symptom
+
+Training curves looked healthy. Episode return climbed and plateaued. Watching rollouts, the agent
+was clearly not confused about where the target was.
+
+But the failures clustered. Not "crashes randomly", but **crashes specifically when moving fast
+toward an obstacle**. Slow approaches were handled. Fast ones were not, and the agent gave no
+indication of trying to avoid them — no braking, no deviation. It flew into the wall as if the wall
+were not there.
+
+That last detail is the actual clue, and I ignored it for weeks. The agent was not failing to
+*execute* an avoidance. It was failing to *predict* that anything bad was about to happen.
+
+## Where the signal goes
+
+DDPG learns from a replay buffer. Uniform sampling means the probability a transition is used for
+learning is proportional to how often that kind of transition occurs.
+
+Now count high-speed collisions. They are terminal, so each contributes exactly one transition. They
+are rare, because most timesteps in most episodes are ordinary flight. In a buffer of hundreds of
+thousands of transitions, the ones that encode "you are moving fast at a wall and are about to die"
+are a rounding error.
+
+So the critic — the network estimating how good a state-action pair is — was almost never trained
+on that region of the state space. Its value estimate near a wall at speed was not wrong in an
+interesting way. It was simply uninformed, and an uninformed critic produces a confident, flat value
+surface, which the actor happily walks straight across.
+
+**The model was fine. The data it saw was the problem.**
+
+## Prioritised Experience Replay
+
+The fix is to stop sampling uniformly. Prioritised Experience Replay samples transitions in
+proportion to their temporal-difference error — how surprised the critic was by what happened.
+
+Collisions are, by construction, maximally surprising to a critic that has never seen one. So they
+get sampled far above their natural frequency, and the value estimate around them actually gets
+trained. PER introduces bias — you are no longer sampling from the distribution you experienced —
+which importance-sampling weights correct for, and that correction matters more than it sounds like
+it should.
+
+This is the general lesson, and it applies well outside RL: **when your failures are rare and
+catastrophic, uniform sampling will not teach you about them.** Whatever the domain, the rare
+important cases need to be over-represented in what you learn from.
+
+## The other half: reward shaping
+
+PER made the critic aware of collisions. It did not, on its own, give the agent time to react.
+
+With a terminal-only penalty, the entire learning signal about a crash arrives at the moment of the
+crash — a point at which, at speed, no available action changes the outcome. The agent is being
+punished for a state it could not escape, and the credit has to propagate backwards through many
+timesteps to reach the decision that actually caused it.
+
+A continuous proximity penalty moves that signal earlier. The agent feels the cost of closing on an
+obstacle while there is still room to act, which is where the useful gradient lives.
+
+The obvious objection to shaping is that agents exploit it. Reward the agent for being near the
+target and it will learn to hover near the target instead of arriving. That is a real failure and I
+hit a version of it.
+
+The fix that worked: **shape on progress, not on position.** Reward the *change* in distance to
+target rather than the distance itself. Approaching earns reward. Sitting still earns nothing, no
+matter how good the position is. The degenerate strategy stops paying.
+
+## What actually fixed it, in order
+
+1. **Recurrence (a GRU) in the policy.** A single frame does not contain closing speed. No amount of
+   replay tuning fixes an observation that is missing the variable you need. This had to come first.
+2. **PER.** Made rare catastrophic transitions visible to the critic.
+3. **Progress-based shaped reward.** Moved the signal early enough to be actionable, without
+   creating a hover exploit.
+
+Roughly 95%+ collision-free arrivals after all three. Not 100%, and I would be suspicious of anyone
+claiming 100% for a stochastic policy in a continuous action space.
+
+## The mistake I would not repeat
+
+I changed all three of those things over a short period, and I cannot cleanly tell you how much each
+contributed. I believe the GRU was necessary and PER was the largest single improvement, but
+"believe" is doing real work in that sentence.
+
+Ablations are boring and they are the difference between a result and an anecdote. Run them one at a
+time, even when you are certain.

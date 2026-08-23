@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img" aria-label="Placeholder: simulated 3D environment with grey exploratory flight paths and a red converged trajectory to a green target">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d2330"/>
+      <stop offset="1" stop-color="#2b3040"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b3040"/>
+      <stop offset="1" stop-color="#3a3f4f"/>
+    </linearGradient>
+    <radialGradient id="targetGlow">
+      <stop offset="0" stop-color="#5fd08a" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#5fd08a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <path d="M0 470 L1600 470 L1600 900 L0 900 Z" fill="url(#floor)"/>
+
+  <!-- perspective floor grid -->
+  <g stroke="#4d5468" stroke-width="1.5" opacity="0.55">
+    <path d="M800 470 L-360 900"/><path d="M800 470 L60 900"/><path d="M800 470 L400 900"/>
+    <path d="M800 470 L680 900"/><path d="M800 470 L920 900"/><path d="M800 470 L1200 900"/>
+    <path d="M800 470 L1540 900"/><path d="M800 470 L1960 900"/>
+    <path d="M0 512 L1600 512"/><path d="M0 566 L1600 566"/><path d="M0 636 L1600 636"/>
+    <path d="M0 728 L1600 728"/><path d="M0 848 L1600 848"/>
+  </g>
+
+  <!-- obstacle blocks -->
+  <g>
+    <path d="M300 380 L470 350 L470 640 L300 700 Z" fill="#394054"/>
+    <path d="M470 350 L560 380 L560 660 L470 640 Z" fill="#2e3549"/>
+    <path d="M1010 300 L1180 268 L1180 600 L1010 660 Z" fill="#394054"/>
+    <path d="M1180 268 L1272 300 L1272 618 L1180 600 Z" fill="#2e3549"/>
+    <path d="M690 452 L790 436 L790 606 L690 636 Z" fill="#333a4d"/>
+    <path d="M790 436 L850 452 L850 618 L790 606 Z" fill="#2a3145"/>
+  </g>
+
+  <!-- grey exploratory trajectories -->
+  <g fill="none" stroke="#8d94a8" stroke-width="2.5" opacity="0.5" stroke-linecap="round">
+    <path d="M140 760 C 300 700, 240 520, 420 500 S 620 640, 760 540 S 900 330, 1080 420"/>
+    <path d="M140 760 C 260 660, 400 720, 520 630 S 700 700, 880 560 S 1020 470, 1180 500"/>
+    <path d="M140 760 C 220 560, 420 620, 560 470 S 700 380, 840 470 S 980 620, 1140 560"/>
+    <path d="M140 760 C 340 780, 460 660, 600 700 S 820 620, 960 660 S 1120 540, 1240 470"/>
+    <path d="M140 760 C 200 640, 300 600, 380 660 S 480 780, 620 760 S 780 700, 900 720"/>
+    <path d="M140 760 C 380 620, 300 460, 500 400 S 660 470, 800 400 S 940 300, 1060 350"/>
+  </g>
+
+  <!-- converged policy -->
+  <path d="M140 760 C 360 700, 560 560, 760 500 S 1060 420, 1236 392"
+        fill="none" stroke="#e2523a" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="140" cy="760" r="11" fill="#e2523a"/>
+
+  <!-- target -->
+  <circle cx="1244" cy="390" r="72" fill="url(#targetGlow)"/>
+  <circle cx="1244" cy="390" r="20" fill="#5fd08a"/>
+  <circle cx="1244" cy="390" r="34" fill="none" stroke="#5fd08a" stroke-width="2.5" opacity="0.7"/>
+
+  <!-- legend -->
+  <g font-family="ui-monospace, monospace" font-size="21" fill="#c3c9d8">
+    <rect x="64" y="64" width="352" height="128" rx="10" fill="#151a24" fill-opacity="0.72"/>
+    <line x1="88" y1="106" x2="136" y2="106" stroke="#8d94a8" stroke-width="3"/>
+    <text x="150" y="113">exploration</text>
+    <line x1="88" y1="148" x2="136" y2="148" stroke="#e2523a" stroke-width="5"/>
+    <text x="150" y="155">converged policy</text>
+  </g>
+
+  <!-- placeholder watermark -->
+  <g font-family="ui-monospace, monospace" font-size="20" letter-spacing="3">
+    <rect x="1338" y="64" width="198" height="40" rx="20" fill="#151a24" fill-opacity="0.8"/>
+    <text x="1362" y="91" fill="#9aa2b4">PLACEHOLDER</text>
+  </g>
+</svg>

@@ -1,0 +1,129 @@
+---
+title: "Autonomous Drone Navigation"
+summary: "A recurrent RL policy that flies a quadcopter to a target through a 3D environment it can only partially see — and stops crashing into things at speed."
+lens: "AI"
+year: "2026"
+period: "Feb 2026 — May 2026"
+highlights:
+  - "Designed a multi-modal RDDPG agent in PyTorch: a 4-layer CNN over 128x72 depth frames fused with a 6-dimensional kinematic state, and a GRU over 5-frame sequences for temporal memory."
+  - "Achieved 95%+ collision-free target arrivals in GPS-denied continuous 3D navigation, improving trajectory efficiency over baseline approaches."
+  - "Built the custom Gymnasium environment wrapping Project Colosseum on Unreal Engine, and a Prioritised Experience Replay buffer backed by a SumTree for O(log n) sampling."
+order: 1
+accent: "blue"
+role: "Model design, environment, training — with one collaborator"
+stack: ["Python", "PyTorch", "Gymnasium", "Colosseum", "Unreal Engine", "RDDPG"]
+repo: "https://github.com/SnHr1707/Autonomous-Drone-Navigation"
+cover: "/media/covers/drone-rl.png"
+coverAlt: "Exploratory flight paths converging into one optimised trajectory."
+metrics:
+  - value: "95%+"
+    label: "Collision-free arrivals"
+  - value: "CNN + GRU"
+    label: "Policy architecture"
+  - value: "Continuous"
+    label: "Action space"
+---
+
+The task is simple to state and unpleasant to solve: put a quadcopter somewhere in a 3D environment,
+give it a target, and let it fly there using only what its sensors can see right now. No map, no
+waypoints, no global state.
+
+## The problem
+
+Classical navigation assumes you know where the obstacles are. A learned controller does not get
+that. It gets a depth frame and some proprioception, and has to output continuous thrust and
+attitude commands at every step, in an environment where a mistake at speed is unrecoverable.
+
+Two things make it genuinely hard:
+
+- **Partial observability.** A single frame does not tell you whether you are approaching a wall or
+  drifting away from it. Velocity relative to an obstacle is not in the observation — it is in the
+  *difference between observations*.
+- **Sparse, asymmetric failure.** Reaching the target is one good event at the end. Hitting a wall is
+  one terminal bad event that can happen at any point. Most of the trajectory carries no signal.
+
+## Constraints
+
+- **Continuous control.** Discretising thrust into buckets throws away the precision the task needs,
+  so value-based methods like DQN are out; this has to be an actor-critic method.
+- **Simulation fidelity matters.** The physics has to be good enough that the failure modes are real
+  ones. That pushed the environment onto Unreal Engine via Colosseum rather than a toy 2D gridworld.
+- **Sample cost.** Every environment step is a rendered frame. Wasting samples is expensive in a way
+  it simply is not in a lightweight simulator.
+
+## Approach
+
+The controller is **RDDPG** — DDPG with recurrence — written in PyTorch and wrapped in a custom
+Gymnasium environment that speaks to Unreal Engine through Project Colosseum, an AirSim fork.
+
+<Flow steps={[
+  { label: "Perception", detail: "A 4-layer CNN encodes a 128x72 depth frame into a compact feature vector." },
+  { label: "Memory", detail: "A GRU over the last 5 frames carries state across timesteps, so the policy sees motion rather than a still frame." },
+  { label: "Actor", detail: "Fuses the visual features with a 6D kinematic state and outputs continuous control." },
+  { label: "Critic", detail: "Estimates action value; trained off-policy from the replay buffer." },
+  { label: "Replay", detail: "Prioritised Experience Replay over a SumTree, so sampling by TD error stays O(log n)." },
+  { label: "Reward", detail: "Dense, continuously shaped on progress toward the target plus proximity penalties." }
+]} />
+
+### The recurrence is the point
+
+The GRU is not a refinement, it is the fix for the actual problem. A feed-forward policy on single
+frames is being asked to infer closing speed from an observation that does not contain it. Adding
+memory turns a partially observed problem into something much closer to a fully observed one,
+because the hidden state accumulates exactly the temporal information that a single frame drops.
+
+### Why the crashes were at high speed specifically
+
+Early policies flew well and then died on contact. The diagnosis was a sampling problem rather than
+a modelling one: high-speed collisions are rare, so uniform replay sampling meant the critic almost
+never saw them, and the value estimate near a wall at speed was effectively uninformed. Prioritised
+Experience Replay biases sampling toward high-TD-error transitions, which is precisely where the
+collisions live.
+
+Reward shaping did the other half. A terminal-only penalty gives the agent one bit of feedback after
+the mistake is unrecoverable; a continuous proximity term gives it gradient *while there is still
+time to act on it*.
+
+## The hard decision
+
+<Tradeoff chose="Dense shaped reward" over="Sparse terminal reward">
+  Sparse rewards are the honest formulation. You want the agent to reach the target; you do not
+  want to hand-specify how. Shaping is well known to be a place where agents find degenerate
+  solutions — hovering near the target to farm proximity reward instead of arriving.
+
+  With rendered frames as the sample unit, sparse reward was not affordable. The exploration budget
+  needed to stumble onto a full successful trajectory by chance was far beyond what the simulator
+  could produce in the time available.
+
+  The mitigation was to shape on <em>progress</em> — the change in distance to target — rather than
+  on distance itself, so hovering earns nothing. Approaching earns reward; staying put does not.
+
+</Tradeoff>
+
+## Outcome
+
+The converged policy reaches its target without collision in **95%+ of evaluation episodes**, flying
+a direct route rather than the wandering exploratory paths of early training.
+
+<Figure
+  zone="bleed"
+  src="/media/drone/trajectories.png"
+  alt="Unreal Engine environment showing grey exploratory flight paths and a single solid red converged trajectory to a green target."
+  caption="Grey: early trial-and-error exploration learning the environment's physics and obstacle boundaries. Red: the converged policy — a direct, optimised route to the target."
+/>
+
+I report 95%+ rather than a round number deliberately. Evaluation runs vary with start position and
+seed, and a claim of zero failures across a stochastic controller in a continuous action space is
+not one I can defend.
+
+## What I would do differently
+
+- **Fix the evaluation protocol first.** I tuned against a small set of start positions, which makes
+  overfitting to the environment layout hard to detect. A held-out set of unseen configurations
+  should have existed before the first training run.
+- **Ablate honestly.** PER, the GRU, and reward shaping all landed close together. I believe each
+  helped; I cannot cleanly attribute how much to each, because I did not run them one at a time.
+- **Track the critic, not just the return.** Episode return was my main signal. Critic loss and
+  Q-value drift would have shown the value function going wrong much earlier than the return did.
+- **Try SAC as a baseline.** DDPG is notoriously sensitive to hyperparameters. A maximum-entropy
+  method might have got to the same place with far less tuning, and I never tested that assumption.

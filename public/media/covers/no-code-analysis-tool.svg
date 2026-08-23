@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" role="img" aria-label="Placeholder cover: a messy spreadsheet transformed into typed columns and charts">
+  <rect width="1600" height="1000" fill="#F6EEDC"/>
+  <g stroke="#8A5E13" stroke-opacity="0.1" stroke-width="1.5">
+    <path d="M0 200 H1600 M0 400 H1600 M0 600 H1600 M0 800 H1600"/>
+    <path d="M200 0 V1000 M400 0 V1000 M600 0 V1000 M800 0 V1000 M1000 0 V1000 M1200 0 V1000 M1400 0 V1000"/>
+  </g>
+
+  <!-- messy sheet -->
+  <text x="120" y="180" font-family="ui-monospace, monospace" font-size="24" letter-spacing="3" fill="#8A5E13">RAW SHEET</text>
+  <rect x="120" y="208" width="480" height="584" rx="14" fill="#FBF5E9" stroke="#8A5E13" stroke-width="4"/>
+  <g stroke="#8A5E13" stroke-opacity="0.25" stroke-width="2">
+    <path d="M120 272 H600 M120 336 H600 M120 400 H600 M120 464 H600 M120 528 H600 M120 592 H600 M120 656 H600 M120 720 H600"/>
+    <path d="M280 208 V792 M440 208 V792"/>
+  </g>
+  <g fill="#8A5E13" fill-opacity="0.35">
+    <rect x="144" y="228" width="104" height="18" rx="9"/>
+    <rect x="304" y="228" width="96" height="18" rx="9"/>
+    <rect x="464" y="228" width="88" height="18" rx="9"/>
+    <rect x="144" y="292" width="88" height="16" rx="8"/>
+    <rect x="304" y="292" width="112" height="16" rx="8"/>
+    <rect x="144" y="356" width="112" height="16" rx="8"/>
+    <rect x="464" y="356" width="72" height="16" rx="8"/>
+    <rect x="304" y="420" width="80" height="16" rx="8"/>
+    <rect x="144" y="484" width="96" height="16" rx="8"/>
+    <rect x="464" y="484" width="104" height="16" rx="8"/>
+    <rect x="144" y="548" width="72" height="16" rx="8"/>
+    <rect x="304" y="612" width="104" height="16" rx="8"/>
+    <rect x="464" y="676" width="88" height="16" rx="8"/>
+    <rect x="144" y="740" width="120" height="16" rx="8"/>
+  </g>
+  <!-- the awkward bits: blanks and a stray total row -->
+  <rect x="144" y="420" width="112" height="16" rx="8" fill="#9A4A1E" fill-opacity="0.18"/>
+  <rect x="464" y="740" width="88" height="16" rx="8" fill="#9A4A1E" fill-opacity="0.18"/>
+  <text x="144" y="700" font-family="ui-monospace, monospace" font-size="17" fill="#9A4A1E" fill-opacity="0.8">TOTAL</text>
+
+  <!-- transform -->
+  <g>
+    <path d="M648 500 H768" stroke="#8A5E13" stroke-width="6" fill="none"/>
+    <path d="M752 480 L780 500 L752 520 Z" fill="#8A5E13"/>
+    <text x="636" y="452" font-family="ui-monospace, monospace" font-size="19" letter-spacing="2" fill="#8A5E13">INFER</text>
+  </g>
+
+  <!-- typed columns -->
+  <text x="828" y="180" font-family="ui-monospace, monospace" font-size="24" letter-spacing="3" fill="#8A5E13">TYPED</text>
+  <g>
+    <rect x="828" y="208" width="308" height="76" rx="12" fill="#FBF5E9" stroke="#8A5E13" stroke-width="3"/>
+    <rect x="856" y="234" width="120" height="16" rx="8" fill="#8A5E13" fill-opacity="0.45"/>
+    <rect x="996" y="228" width="112" height="30" rx="15" fill="#31479E" fill-opacity="0.16"/>
+    <text x="1014" y="249" font-family="ui-monospace, monospace" font-size="15" fill="#31479E">date</text>
+
+    <rect x="828" y="300" width="308" height="76" rx="12" fill="#FBF5E9" stroke="#8A5E13" stroke-width="3"/>
+    <rect x="856" y="326" width="140" height="16" rx="8" fill="#8A5E13" fill-opacity="0.45"/>
+    <rect x="996" y="320" width="112" height="30" rx="15" fill="#2F6B47" fill-opacity="0.18"/>
+    <text x="1010" y="341" font-family="ui-monospace, monospace" font-size="15" fill="#2F6B47">numeric</text>
+
+    <rect x="828" y="392" width="308" height="76" rx="12" fill="#FBF5E9" stroke="#8A5E13" stroke-width="3"/>
+    <rect x="856" y="418" width="104" height="16" rx="8" fill="#8A5E13" fill-opacity="0.45"/>
+    <rect x="996" y="412" width="112" height="30" rx="15" fill="#9A4A1E" fill-opacity="0.16"/>
+    <text x="1008" y="433" font-family="ui-monospace, monospace" font-size="15" fill="#9A4A1E">category</text>
+  </g>
+
+  <!-- charts -->
+  <rect x="828" y="512" width="652" height="280" rx="14" fill="#FBF5E9" stroke="#8A5E13" stroke-width="4"/>
+  <g fill="#8A5E13">
+    <rect x="872" y="656" width="52" height="90" rx="6" fill-opacity="0.45"/>
+    <rect x="940" y="614" width="52" height="132" rx="6" fill-opacity="0.55"/>
+    <rect x="1008" y="576" width="52" height="170" rx="6" fill-opacity="0.7"/>
+    <rect x="1076" y="600" width="52" height="146" rx="6" fill-opacity="0.6"/>
+    <rect x="1144" y="640" width="52" height="106" rx="6" fill-opacity="0.5"/>
+  </g>
+  <path d="M1248 730 C 1290 700, 1310 640, 1352 618 S 1418 570, 1444 560"
+        fill="none" stroke="#2F6B47" stroke-width="6" stroke-linecap="round"/>
+  <g fill="#2F6B47" fill-opacity="0.5">
+    <circle cx="1248" cy="730" r="9"/><circle cx="1330" cy="646" r="9"/>
+    <circle cx="1400" cy="588" r="9"/><circle cx="1444" cy="560" r="9"/>
+  </g>
+  <line x1="872" y1="746" x2="1444" y2="746" stroke="#8A5E13" stroke-opacity="0.35" stroke-width="3"/>
+  <text x="1200" y="212" font-family="ui-monospace, monospace" font-size="19" fill="#8A5E13" fill-opacity="0.7">10,000+ rows</text>
+
+  <g font-family="ui-monospace, monospace" font-size="20" letter-spacing="3">
+    <rect x="1290" y="880" width="206" height="42" rx="21" fill="#8A5E13" fill-opacity="0.14"/>
+    <text x="1314" y="908" fill="#8A5E13" fill-opacity="0.8">PLACEHOLDER</text>
+  </g>
+</svg>

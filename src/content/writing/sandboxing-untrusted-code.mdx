@@ -1,0 +1,116 @@
+---
+title: "Running code you did not write, from people you do not trust"
+summary: "What I learned building the execution layer of an online judge — where the real boundary is, why timeouts belong outside the sandbox, and the failure mode that does not look like one."
+date: "2026-07-12"
+tags: ["systems", "security", "docker"]
+accent: "rust"
+---
+
+An online judge has an unusual property for a web application: its core feature is executing
+arbitrary code submitted by anonymous strangers. Not parsing it, not analysing it — compiling and
+running it on your machine.
+
+Everything else about the system is ordinary CRUD. This one thing is not, and it shapes every other
+decision.
+
+## The threat model is boring, and that is the problem
+
+When people imagine attacks on a judge they imagine something clever. In practice the first things
+you encounter are:
+
+- An infinite loop. Usually not malicious — someone's `while` condition is wrong.
+- Allocating in a loop until the host starts swapping.
+- Forking in a loop.
+- Writing files into the working directory.
+- Opening a socket, because the submission was pasted from somewhere that expected a network.
+
+None of these require intent. A first-year student can produce all five by accident within a week.
+This matters because it changes what "secure" means: you are not defending against a determined
+attacker so much as against the ordinary distribution of broken programs, and that distribution
+includes everything on that list every single day.
+
+## Where the boundary actually is
+
+The temptation is to sanitise the submission — scan for `system()`, block imports, reject anything
+that touches the filesystem. This does not work, and it is worth being precise about why.
+
+Static analysis of arbitrary source for arbitrary behaviour is undecidable in general, and in
+practice it is worse than that: the space of ways to express "open a socket" across C++, Java and
+Python is large, and every rule you add is a rule someone routes around while also occasionally
+rejecting a legitimate solution. You end up with a filter that is simultaneously leaky and annoying.
+
+The boundary has to be **below the code**, at a level the code cannot argue with:
+
+```
+submission  →  container (no network, capped memory,
+                          capped CPU, capped process count)
+            →  supervisor (owns the wall clock, owns the kill switch)
+```
+
+In my case that is literally a set of `docker run` flags — `--network=none`,
+`--memory=256m`, `--cpus=1`, `--pids-limit=64` — and a parent process holding a
+timer it can act on regardless of what the child is doing.
+
+The container constrains what the program can reach. The supervisor constrains how long it gets. The
+program's own cooperation is never required for either.
+
+## Put the timeout outside
+
+This is the part I got wrong first.
+
+The natural place to enforce a time limit is inside the runner, next to the process you started.
+That works right up until the thing you are timing is what has gone wrong. A process that is
+thrashing the allocator, or that has spawned children faster than you are tracking them, is not
+going to be politely interrupted by a timer running in the same contended environment.
+
+The wall clock belongs to a supervisor **outside** the sandbox, watching a process it can kill
+unconditionally. The container-level caps — memory, CPU share, process count — are still worth
+setting, but they are defence in depth, not the mechanism.
+
+A useful way to phrase it: **anything the untrusted program can influence is not an enforcement
+mechanism.**
+
+## Reuse is where correctness quietly dies
+
+Container start-up is the largest fixed cost in the pipeline, and the obvious optimisation is to keep
+a warm container and reuse it across submissions.
+
+The failure mode this introduces is the worst kind. It does not throw. It does not 500. The judge
+keeps returning verdicts, and the verdicts are subtly wrong — a file left behind by one submission
+influences the next, or memory pressure from a previous run causes a marginal solution to exceed its
+limit. You do not detect this from your monitoring. You detect it from a contestant insisting their
+accepted solution now fails, and you will not believe them.
+
+Determinism is a security property in a judge. If the verdict depends on what ran before it, the
+system no longer means anything.
+
+The compromise I would build now: pre-warm containers so start-up is off the critical path, but
+**discard each one after a single use**. You get most of the latency back and keep the boundary
+intact.
+
+## Bound your concurrency before you need to
+
+The naive judge runs the submission inside the HTTP request handler. This is fine with one user and
+falls apart in a specific way that is worth understanding.
+
+Under load, unbounded concurrency does not fail loudly — it degrades everything simultaneously.
+Every running submission gets less CPU, so submissions that would have passed start exceeding their
+time limits. The judge does not go down; it starts lying.
+
+A queue with a bounded number of workers draining it is the fix, and the interesting property is
+that it turns an accuracy problem into a latency problem. Queued submissions wait longer, but every
+verdict that comes back is still correct. That is a much better trade, and it generalises — under
+overload, degrade the thing your users can tolerate, not the thing they rely on.
+
+Mine runs exactly one worker. That is the crudest possible bound, and for a first version it is the
+right one: it makes contention impossible rather than merely unlikely, and it means every claim I
+make about isolation only has to hold for one running submission at a time.
+
+## What I would tell myself at the start
+
+1. Decide what your boundary is in one sentence. If you cannot, you do not have one.
+2. Nothing the untrusted process can touch is allowed to be part of enforcement.
+3. Determinism is a feature. Anything that makes verdicts depend on history is a bug, even when it
+   is faster.
+4. Instrument the pipeline before you tune it. I spent time adjusting limits I had no measurements
+   for, which is guessing with extra steps.
