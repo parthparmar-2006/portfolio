@@ -80,15 +80,25 @@ export default function HomePage() {
       {/* ---- Stats band --------------------------------------------------- */}
       <Canvas className="border-y border-rule bg-panel">
         <Zone zone="wide">
-          <dl className="grid grid-cols-2 gap-8 py-10 lg:grid-cols-4">
+          {/* One column on a phone, not two. `grid-cols-2` was the unconditional
+              base, which at 375px gave each cell 151px to hold a text-4xl
+              numeral plus a four-company detail line. Below sm the numeral sits
+              on its own row beside the label instead of above it, which reads
+              as a list rather than four cramped tiles. */}
+          <dl className="grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 sm:gap-8 sm:py-10 lg:grid-cols-4">
             {stats.map((stat, index) => (
               <Reveal key={stat.label} delay={index * 0.06}>
-                <div style={accentStyle((["rust", "blue", "moss", "amber"] as const)[index % 4])}>
-                  <dd className="font-display text-4xl leading-none text-accent">
+                <div
+                  className="flex items-baseline gap-4 sm:block"
+                  style={accentStyle((["rust", "blue", "moss", "amber"] as const)[index % 4])}
+                >
+                  <dd className="w-[4.75rem] shrink-0 font-display text-4xl leading-none text-accent sm:w-auto">
                     <AnimatedNumber value={stat.value} suffix={stat.suffix} />
                   </dd>
-                  <dt className="mt-2 text-sm font-medium">{stat.label}</dt>
-                  <p className="mt-0.5 text-sm leading-snug text-ink-muted">{stat.detail}</p>
+                  <div className="min-w-0">
+                    <dt className="text-sm font-medium sm:mt-2">{stat.label}</dt>
+                    <p className="mt-0.5 text-sm leading-snug text-ink-muted">{stat.detail}</p>
+                  </div>
                 </div>
               </Reveal>
             ))}
@@ -97,7 +107,7 @@ export default function HomePage() {
       </Canvas>
 
       {/* ---- Selected work ------------------------------------------------ */}
-      <Canvas as="section" style={accentStyle("rust")} className="py-20 sm:py-28">
+      <Canvas as="section" style={accentStyle("rust")} className="py-14 sm:py-28">
         <Zone zone="wide">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
@@ -135,7 +145,7 @@ export default function HomePage() {
       </Canvas>
 
       {/* ---- Background ---------------------------------------------------- */}
-      <Canvas as="section" style={accentStyle("blue")} className="bg-accent-wash py-20 sm:py-28">
+      <Canvas as="section" style={accentStyle("blue")} className="bg-accent-wash py-14 sm:py-28">
         <Zone zone="wide">
           <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr]">
             <div>
@@ -179,7 +189,7 @@ export default function HomePage() {
       </Canvas>
 
       {/* ---- Playground ---------------------------------------------------- */}
-      <Canvas as="section" style={accentStyle("moss")} className="py-20 sm:py-28">
+      <Canvas as="section" style={accentStyle("moss")} className="py-14 sm:py-28">
         <Zone zone="wide">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
@@ -220,7 +230,7 @@ export default function HomePage() {
       </Canvas>
 
       {/* ---- Writing -------------------------------------------------------- */}
-      <Canvas as="section" style={accentStyle("amber")} className="border-t border-rule py-20 sm:py-28">
+      <Canvas as="section" style={accentStyle("amber")} className="border-t border-rule py-14 sm:py-28">
         <Zone zone="wide">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
@@ -264,7 +274,7 @@ export default function HomePage() {
           Renders nothing while the array is empty, so shipping without quotes
           is safe. This lived on /about before that page was removed. */}
       {testimonials.length > 0 ? (
-        <Canvas as="section" style={accentStyle("blue")} className="bg-accent-wash py-20 sm:py-28">
+        <Canvas as="section" style={accentStyle("blue")} className="bg-accent-wash py-14 sm:py-28">
           <Zone zone="wide">
             <Eyebrow>What people say</Eyebrow>
             <ul className="mt-10 grid gap-px overflow-hidden rounded-xl border border-rule bg-rule sm:grid-cols-2">
@@ -289,7 +299,7 @@ export default function HomePage() {
       ) : null}
 
       {/* ---- Contact --------------------------------------------------------- */}
-      <Canvas as="section" style={accentStyle("rust")} className="border-t border-rule py-20 sm:py-28">
+      <Canvas as="section" style={accentStyle("rust")} className="border-t border-rule py-14 sm:py-28">
         <Zone zone="wide">
           <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
             <div>

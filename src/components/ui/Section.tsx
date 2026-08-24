@@ -35,7 +35,7 @@ export function Section({
       as="section"
       id={id}
       style={accentStyle(accent)}
-      className={cn("py-20 sm:py-28", wash && "bg-accent-wash", className)}
+      className={cn("py-14 sm:py-28", wash && "bg-accent-wash", className)}
     >
       <Zone zone={wide ? "wide" : "text"}>
         {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}

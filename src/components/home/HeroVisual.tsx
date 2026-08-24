@@ -36,7 +36,10 @@ export function HeroVisual() {
           width={size.width}
           height={size.height}
           priority
-          sizes="(min-width: 1024px) 400px, 70vw"
+          // The wrapper on the home page is capped at 17rem / 19rem below lg,
+          // so 70vw both under-fetched at 375px (262px into a 272px box, blurry
+          // at 2x) and over-fetched by ~47% at 640px. These are the real caps.
+          sizes="(min-width: 1024px) 400px, (min-width: 640px) 304px, 272px"
           // Capped height with a cover crop, so the portrait can never grow
           // taller than the text column beside it.
           className="max-h-[24rem] w-full object-cover object-top lg:max-h-[26rem]"

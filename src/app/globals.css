@@ -49,6 +49,64 @@
   --measure: 68ch;
   --margin-col: 13rem;
   --gutter: 1.5rem;
+
+  /* Display type sizes live here, NOT in @theme, on purpose.
+     `@theme inline` does not emit its keys as custom properties — it inlines
+     the declared value straight into the generated utility. So a media query
+     redefining `--text-hero` would be a silent no-op. Declaring the real clamp
+     here and pointing @theme at `var(--fs-hero)` gives back a genuine override
+     point, exactly the way --accent already works above. */
+  --fs-hero:    clamp(2.6rem, 5.6vw, 4.25rem);
+  --fs-title:   clamp(2.6rem, 6vw,   4.5rem);
+  --fs-section: clamp(2.2rem, 5vw,   3.6rem);
+  --fs-utility: clamp(1.9rem, 4vw,   2.8rem);
+  /* /contact sets the address at display size; it is not one of the four page
+     archetypes, so it gets its own variable rather than borrowing one. */
+  --fs-address: clamp(1.9rem, 5.5vw, 4rem);
+
+  --lh-hero: 0.98;
+  --lh-title: 1;
+  --lh-section: 1.04;
+  --lh-utility: 1.1;
+}
+
+/* Below Tailwind's `lg` breakpoint the desktop clamps are useless: every one of
+   them sits pinned to its floor until ~700-760px, so a 375px phone and a 768px
+   tablet rendered the same 41.6px headline and then jumped to 68px at 1024px.
+   These ramps share the intercept 1.28rem (2% of 1024px), which makes each one
+   `1.28rem + (D - 2)vw` for today's coefficient D — so at 1024px each evaluates
+   to D x 10.24, i.e. exactly the desktop value, and the two curves meet with no
+   visible step. Each floor is the ramp's own value at 320px, so it never kinks
+   inside the supported range.
+
+   `width < 64rem` rather than `max-width: 1023px`: 64rem is what Tailwind
+   compiles `lg:` to, so this is the exact complement of every `lg:` utility at
+   any root font size. */
+@media (width < 64rem) {
+  :root {
+    --fs-hero:    clamp(2.00rem, 1.28rem + 3.6vw, 4.25rem);
+    --fs-title:   clamp(2.08rem, 1.28rem + 4vw,   4.5rem);
+    --fs-section: clamp(1.88rem, 1.28rem + 3vw,   3.6rem);
+    --fs-utility: clamp(1.68rem, 1.28rem + 2vw,   2.8rem);
+    --fs-address: clamp(1.83rem, 1.28rem + 3.5vw, 4rem);
+
+    /* The desktop leadings are tuned for 57-72px type and go slack at 30px. */
+    --lh-hero: 1.04;
+    --lh-title: 1.04;
+    --lh-section: 1.08;
+    --lh-utility: 1.14;
+
+    /* Lives on :root, not on .canvas, so the header and footer — which are
+       centred max-width boxes rather than canvases — can pad by the same
+       number. They used to pad by 24px against the page's 20px, which put the
+       wordmark 4px inboard of every h1 underneath it. */
+    --gutter: 1.25rem;
+  }
+}
+
+/* Narrow phones buy back 8px of measure. */
+@media (max-width: 399px) {
+  :root { --gutter: 1rem; }
 }
 
 /* The in-app toggle only has to change color-scheme; light-dark() does the
@@ -92,14 +150,14 @@
   /* Display scale, assigned per page archetype rather than per page. Before
      this existed, eight of eleven page titles used the same clamp and every
      page opened identically. */
-  --text-hero: clamp(2.6rem, 5.6vw, 4.25rem);
-  --text-hero--line-height: 0.98;
-  --text-title: clamp(2.6rem, 6vw, 4.5rem);
-  --text-title--line-height: 1;
-  --text-section: clamp(2.2rem, 5vw, 3.6rem);
-  --text-section--line-height: 1.04;
-  --text-utility: clamp(1.9rem, 4vw, 2.8rem);
-  --text-utility--line-height: 1.1;
+  --text-hero: var(--fs-hero);
+  --text-hero--line-height: var(--lh-hero);
+  --text-title: var(--fs-title);
+  --text-title--line-height: var(--lh-title);
+  --text-section: var(--fs-section);
+  --text-section--line-height: var(--lh-section);
+  --text-utility: var(--fs-utility);
+  --text-utility--line-height: var(--lh-utility);
 
   --text-base: 1.0625rem;
   --default-transition-duration: 200ms;
@@ -183,12 +241,18 @@
   /* The left margin, for sticky rails and marginalia that lead the text. */
   .col-rail   { grid-column: wide-start / text-start; }
 
-  /* Below 1024px the margins collapse and everything is one column. No
-     component needs a breakpoint of its own for this to work. */
+  /* Below 1024px the side zones stop being margins and everything reads as one
+     column. `--margin-col` is not set to 0 though: that made `col-wide`
+     identical to `col-text`, so both were capped at --measure (~694px) across
+     the whole 0-1023px range and a landscape tablet showed a 694px column
+     floating in ~165px of dead space on each side. Instead the margins absorb
+     whatever the viewport has spare past the measure, up to the desktop 13rem.
+     Below ~700px there is no spare width, so this resolves to 0 and phones are
+     unaffected. The clamp's lower bound is load-bearing — minmax() rejects a
+     negative track size. */
   @media (max-width: 1023px) {
     .canvas {
-      --margin-col: 0rem;
-      --gutter: 1.25rem;
+      --margin-col: clamp(0rem, (100% - var(--measure)) / 2 - var(--gutter), 13rem);
     }
     .col-margin,
     .col-rail { grid-column: text; }
@@ -308,7 +372,29 @@
 }
 
 /* Motion is opt-in to the user's preference, globally, in one place. */
+/* Route-transition safety net. template.tsx serialises motion's
+   `initial={{opacity:0}}` into the SSR markup as an inline style, so a page
+   whose motion runtime never runs would stay completely invisible rather than
+   merely unanimated. CSS animations sit above inline styles in the cascade, so
+   this fade wins on its own and then pins opacity at 1 via `both` — the same
+   end state motion animates to, so the two never disagree. */
+@keyframes route-fade-in { from { opacity: 0 } to { opacity: 1 } }
+.route-fade { animation: route-fade-in 120ms ease-out both; }
+
+/* Motion-driven reveals serialise `opacity:0` into the server HTML, so with
+   scripting off the page would render with blank bands. This is the only
+   condition under which that is certain, and forcing visibility here costs
+   nothing for everyone else. */
+@media (scripting: none) {
+  .js-reveal, .route-fade {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .route-fade { animation: none; opacity: 1 !important; }
+
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -405,13 +491,26 @@
   .prose-editorial :not(pre) > code {
     font-family: var(--font-mono), monospace;
     font-size: 0.875em;
+    /* A long identifier or URL in inline code is the one thing in the prose
+       that can push a phone into horizontal scroll. Let it break anywhere. */
+    overflow-wrap: anywhere;
     background-color: var(--panel);
     border: 1px solid var(--rule);
     border-radius: 4px;
     padding: 0.1em 0.35em;
   }
+  /* Tables get their own scroller. mdx-components wraps every <table> in
+     .table-scroll; without it a four-column table is an overflow waiting to
+     happen on a phone. min-width keeps the columns readable rather than
+     letting them crush to nothing. */
+  .prose-editorial .table-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
   .prose-editorial table {
     width: 100%;
+    min-width: 28rem;
     border-collapse: collapse;
     font-size: 0.95rem;
   }
@@ -437,6 +536,10 @@
     border-radius: 8px;
     padding: 1rem 1.1rem;
     overflow-x: auto;
+    /* Without this a horizontal swipe that runs off the end of a code block
+       chains to the page and triggers back-navigation on iOS. */
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
     font-size: 0.85rem;
     line-height: 1.65;
   }

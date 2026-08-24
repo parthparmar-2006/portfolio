@@ -16,8 +16,8 @@ export function Footer() {
 
   return (
     <footer className="mt-auto border-t border-rule bg-panel">
-      <div className="mx-auto w-full max-w-6xl px-6 py-14 sm:px-8">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr]">
+      <div className="mx-auto w-full max-w-6xl px-[var(--gutter)] py-12 sm:py-14 lg:px-8">
+        <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-[1.6fr_1fr_1fr]">
           <div>
             <p className="font-display text-2xl">{profile.name}</p>
             <p className="mt-2 max-w-[36ch] text-sm leading-relaxed text-ink-muted">
@@ -37,14 +37,14 @@ export function Footer() {
               <p className="font-mono text-[0.66rem] uppercase tracking-[0.14em] text-ink-faint">
                 {group.title}
               </p>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-1 lg:mt-3 lg:space-y-2">
                 {nav
                   .filter((item) => item.group === group.id)
                   .map((item) => (
                     <li key={item.href}>
                       <Link
                         href={item.href}
-                        className="text-sm text-ink-muted transition-colors hover:text-ink"
+                        className="flex min-h-11 items-center text-sm text-ink-muted transition-colors hover:text-ink lg:min-h-0"
                       >
                         {item.label}
                       </Link>
@@ -54,7 +54,7 @@ export function Footer() {
                   <li>
                     <Link
                       href="/rss.xml"
-                      className="text-sm text-ink-muted transition-colors hover:text-ink"
+                      className="flex min-h-11 items-center text-sm text-ink-muted transition-colors hover:text-ink lg:min-h-0"
                     >
                       RSS
                     </Link>
@@ -66,14 +66,14 @@ export function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col gap-4 border-t border-rule pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <ul className="flex flex-wrap gap-x-5 gap-y-2">
+          <ul className="-my-2 flex flex-wrap gap-x-5 lg:my-0 lg:gap-y-2">
             {socials.map((social) => (
               <li key={social.label}>
                 <a
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer me"
-                  className="font-mono text-[0.72rem] uppercase tracking-[0.1em] text-ink-muted transition-colors hover:text-ink"
+                  className="flex min-h-11 items-center font-mono text-[0.72rem] uppercase tracking-[0.1em] text-ink-muted transition-colors hover:text-ink lg:min-h-0"
                 >
                   {social.label}
                 </a>

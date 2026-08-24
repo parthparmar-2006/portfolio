@@ -47,7 +47,7 @@ export function WorkIndex({ items }: { items: WorkCardItem[] }) {
               onClick={() => setLens(option)}
               aria-pressed={lens === option}
               className={cn(
-                "rounded-full border px-4 py-1.5 font-mono text-[0.72rem] uppercase tracking-[0.1em] transition-colors",
+                "inline-flex min-h-11 items-center rounded-full border px-4 py-1.5 font-mono text-[0.72rem] uppercase tracking-[0.1em] transition-colors lg:min-h-0",
                 lens === option
                   ? "border-ink bg-ink text-ground"
                   : "border-rule text-ink-muted hover:border-rule-strong hover:text-ink",

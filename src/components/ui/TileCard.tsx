@@ -36,17 +36,24 @@ export function TileCard({
   accent: AccentName;
 }) {
   return (
-    <article style={accentStyle(accent)} className="h-full">
-      <GlowSurface className="card-glow relative h-full rounded-xl">
+    <article style={accentStyle(accent)} className="h-full min-w-0">
+      <GlowSurface className="card-glow relative h-full min-w-0 rounded-xl">
         <Link
           href={href}
           aria-label={title}
-          className="relative z-[2] flex h-full flex-col overflow-hidden rounded-xl border border-rule bg-panel transition-colors hover:border-accent"
+          className="relative z-[2] flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-rule bg-panel transition-colors hover:border-accent"
         >
-          <div className="relative flex h-24 shrink-0 items-center overflow-hidden bg-accent-wash">
+          <div className="relative flex h-24 min-w-0 shrink-0 items-center overflow-hidden bg-accent-wash">
+            {/* Absolutely positioned, not a flex child. The text is decorative and
+                deliberately `whitespace-nowrap` so it bleeds off the right edge —
+                but in flow that gave the card a ~443px min-content width, and a
+                grid item's default `min-width: auto` resolves to exactly that, so
+                the home page scrolled sideways on every phone (461px of content in
+                a 375px viewport). Out of flow it contributes nothing to intrinsic
+                sizing, and overflow-hidden above still clips it the same way. */}
             <span
               aria-hidden
-              className="whitespace-nowrap pl-5 font-display text-[2.6rem] leading-none text-accent/70"
+              className="absolute inset-y-0 left-0 flex items-center whitespace-nowrap pl-5 font-display text-[2.6rem] leading-none text-accent/70"
             >
               {panelText}
             </span>

@@ -265,15 +265,18 @@ export function Flow({ steps }: { steps: { label: string; detail?: string }[] })
 
 export const mdxComponents: MDXComponents = {
   a: Anchor,
-  img: (props) => (
-    // MDX image syntax; sized generously and never blocking.
-    <Image
-      {...(props as React.ComponentProps<typeof Image>)}
-      width={1600}
-      height={900}
-      className="h-auto w-full rounded-lg border border-rule"
-      alt={props.alt ?? ""}
-    />
+  // Bare markdown `![]()` goes through the same resolve-and-measure path as
+  // <Figure>. It used to hardcode 1600x900 with no `sizes`, which is the exact
+  // pair of mistakes imageSize() exists to prevent: a wrong reserved box and a
+  // full-viewport-width fetch inside a 680px column.
+  img: ({ src, alt }) => <Figure src={typeof src === "string" ? src : ""} alt={alt ?? ""} />,
+  // Every table gets its own horizontal scroller. The one table in the writing
+  // today survives a phone by luck — four columns of prose would not, and the
+  // failure mode is the whole page scrolling sideways, not just the table.
+  table: (props) => (
+    <div className="table-scroll">
+      <table {...props} />
+    </div>
   ),
   Callout,
   Note,

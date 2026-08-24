@@ -78,7 +78,8 @@ export function ThemeToggle() {
       onClick={cycle}
       aria-label={`${label}. Activate to change.`}
       title={label}
-      className="grid size-9 place-items-center rounded-md border border-rule text-ink-muted transition-colors hover:border-rule-strong hover:text-ink"
+      // 44px on touch, back to the desktop 36px at lg.
+      className="grid size-11 place-items-center rounded-md border border-rule text-ink-muted transition-colors hover:border-rule-strong hover:text-ink lg:size-9"
     >
       <span aria-hidden className="text-[0.95rem] leading-none">
         {theme === "dark" ? "◑" : theme === "light" ? "◐" : "◒"}

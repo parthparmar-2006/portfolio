@@ -8,7 +8,7 @@ import { Mdx } from "@/components/mdx/Mdx";
 import { Metrics } from "@/components/mdx/mdx-components";
 import { Canvas, Zone } from "@/components/ui/Canvas";
 import { ReadingProgress } from "@/components/ui/ReadingProgress";
-import { TableOfContents } from "@/components/ui/TableOfContents";
+import { MobileTableOfContents, TableOfContents } from "@/components/ui/TableOfContents";
 import { PrevNext } from "@/components/ui/PrevNext";
 import { accentStyle } from "@/lib/utils";
 
@@ -128,7 +128,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
       ) : null}
 
       {/* ---- Body + rail --------------------------------------------------- */}
-      <Canvas className="py-16">
+      <Canvas className="py-10 sm:py-16">
         <Zone zone="wide" className="lg:grid lg:grid-cols-[13rem_1fr] lg:gap-x-12">
           <aside className="sticky top-[calc(var(--header-h)+2rem)] hidden self-start lg:block">
             <TableOfContents headings={headings} />
@@ -136,6 +136,8 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
 
           {/* The article is its own canvas, which is what lets a figure or a
               diagram inside the prose break out of the reading measure. */}
+          <MobileTableOfContents headings={headings} />
+
           <div className="canvas canvas-article prose-editorial prose-numbered">
             <Mdx source={body} />
           </div>
@@ -143,7 +145,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
       </Canvas>
 
       {/* ---- Prev / next ---------------------------------------------------- */}
-      <Canvas className="border-t border-rule pb-24 pt-12">
+      <Canvas className="border-t border-rule pb-16 pt-8 sm:pb-24 sm:pt-12">
         <Zone zone="wide">
           <PrevNext base="/work" previous={previous} next={next} ariaLabel="More work" />
 
@@ -173,7 +175,7 @@ function OutboundLink({ href, label }: { href: string; label: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="rounded-full border border-rule-strong px-5 py-2 font-mono text-[0.72rem] uppercase tracking-[0.1em] transition-colors hover:border-accent hover:text-accent"
+      className="inline-flex min-h-11 items-center rounded-full border border-rule-strong px-5 py-2 font-mono text-[0.72rem] uppercase tracking-[0.1em] transition-colors hover:border-accent hover:text-accent lg:min-h-0"
     >
       {label} ↗
     </a>

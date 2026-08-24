@@ -28,7 +28,7 @@ export default function WritingPage() {
   const [latest, ...rest] = posts;
 
   return (
-    <Canvas className="pb-24 pt-16 sm:pt-20">
+    <Canvas className="pb-16 pt-11 sm:pb-24 sm:pt-20">
       <Zone zone="wide">
         <Eyebrow>Writing</Eyebrow>
         <h1 className="mt-5 max-w-[18ch] font-display text-title">

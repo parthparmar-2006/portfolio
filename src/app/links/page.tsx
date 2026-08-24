@@ -44,7 +44,7 @@ export default function LinksPage() {
         </Zone>
       </Canvas>
 
-      <Canvas className="pb-24 pt-10">
+      <Canvas className="pb-16 pt-8 sm:pb-24 sm:pt-10">
         <Zone zone="text" className="mx-auto max-w-md">
           <ul className="space-y-3">
             {internal.map((item) => (

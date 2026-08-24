@@ -17,7 +17,7 @@ export default function WorkPage() {
   const items = withCovers(getMeta("work"));
 
   return (
-    <Canvas style={accentStyle("rust")} className="pb-24 pt-16 sm:pt-20">
+    <Canvas style={accentStyle("rust")} className="pb-16 pt-11 sm:pb-24 sm:pt-20">
       <Zone zone="wide">
         <Eyebrow>Work</Eyebrow>
         <h1 className="mt-5 max-w-[18ch] font-display text-title">

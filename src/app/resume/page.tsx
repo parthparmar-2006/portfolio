@@ -32,7 +32,7 @@ export default function ResumePage() {
   const hasPdf = publicFileExists("/resume.pdf");
 
   return (
-    <Canvas className="pb-24 pt-12 sm:pt-16">
+    <Canvas className="pb-16 pt-10 sm:pb-24 sm:pt-16">
       <Zone zone="wide">
         <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-x-14">
           {/* ---- Identity rail ---- */}

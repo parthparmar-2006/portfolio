@@ -23,7 +23,7 @@ export default function StackPage() {
   const total = stack.reduce((sum, group) => sum + group.items.length, 0);
 
   return (
-    <Canvas className="pb-24 pt-14 sm:pt-20">
+    <Canvas className="pb-16 pt-10 sm:pb-24 sm:pt-20">
       <Zone zone="wide">
         <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-ink-faint">
           {total} entries · {stack.length} groups
@@ -44,7 +44,10 @@ export default function StackPage() {
               <h2 className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-accent">
                 {group.title}
               </h2>
-              <p className="mt-2 hidden text-[0.85rem] leading-relaxed text-ink-faint lg:block">
+              {/* Shown everywhere now. Hiding it below lg cost mobile readers
+                  the one line that explains what each of the eight groups is
+                  for, which is the only editorial content on the page. */}
+              <p className="mt-2 max-w-[52ch] text-[0.85rem] leading-relaxed text-ink-faint">
                 {group.blurb}
               </p>
             </div>

@@ -96,3 +96,48 @@ export function TableOfContents({ headings }: { headings: Heading[] }) {
     </nav>
   );
 }
+
+/**
+ * The same list, collapsed, for widths where the sticky rail is hidden.
+ *
+ * A ten-section case study had no in-page navigation at all on a phone — the
+ * rail is `hidden lg:block` and there was no fallback. `<details>` rather than
+ * a state-driven panel because it costs nothing, works before hydration, and
+ * is already the right semantics for "disclosure".
+ */
+export function MobileTableOfContents({ headings }: { headings: Heading[] }) {
+  const sections = headings.filter((heading) => heading.level === 2);
+  if (sections.length < 3) return null;
+
+  return (
+    <details className="group mb-10 rounded-xl border border-rule bg-panel lg:hidden">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 font-mono text-[0.66rem] uppercase tracking-[0.14em] text-ink-muted [&::-webkit-details-marker]:hidden">
+        On this page
+        <span aria-hidden className="text-ink-faint transition-transform group-open:rotate-180">
+          ▾
+        </span>
+      </summary>
+      <ol className="border-t border-rule px-4 pb-2">
+        {sections.map((heading, index) => (
+          <li key={heading.id}>
+            <a
+              href={`#${heading.id}`}
+              onClick={(event) => {
+                scrollToHeading(event, heading.id);
+                // Collapse behind the reader rather than leaving the list
+                // covering the section they just jumped to.
+                event.currentTarget.closest("details")?.removeAttribute("open");
+              }}
+              className="flex min-h-11 items-center gap-3 text-[0.85rem] leading-snug text-ink-muted"
+            >
+              <span className="font-mono text-[0.65rem] tabular-nums text-ink-faint">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span>{heading.text}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </details>
+  );
+}

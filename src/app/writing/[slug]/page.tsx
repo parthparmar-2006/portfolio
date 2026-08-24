@@ -5,7 +5,7 @@ import { buildMetadata } from "@/lib/seo";
 import { Mdx } from "@/components/mdx/Mdx";
 import { Canvas, Zone } from "@/components/ui/Canvas";
 import { ReadingProgress } from "@/components/ui/ReadingProgress";
-import { TableOfContents } from "@/components/ui/TableOfContents";
+import { MobileTableOfContents, TableOfContents } from "@/components/ui/TableOfContents";
 import { PrevNext } from "@/components/ui/PrevNext";
 import { profile, siteUrl } from "@/data/profile";
 import { accentStyle, formatDate } from "@/lib/utils";
@@ -81,11 +81,13 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
         </Zone>
       </Canvas>
 
-      <Canvas className="py-16">
+      <Canvas className="py-10 sm:py-16">
         <Zone zone="wide" className="lg:grid lg:grid-cols-[13rem_1fr] lg:gap-x-12">
           <aside className="sticky top-[calc(var(--header-h)+2rem)] hidden self-start lg:block">
             <TableOfContents headings={headings} />
           </aside>
+
+          <MobileTableOfContents headings={headings} />
 
           <div className="canvas canvas-article prose-editorial prose-numbered">
             <Mdx source={body} />
@@ -93,7 +95,7 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
         </Zone>
       </Canvas>
 
-      <Canvas className="border-t border-rule pb-24 pt-12">
+      <Canvas className="border-t border-rule pb-16 pt-8 sm:pb-24 sm:pt-12">
         <Zone zone="wide">
           <PrevNext
             base="/writing"

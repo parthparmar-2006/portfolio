@@ -11,6 +11,12 @@ import { cn } from "@/lib/utils";
  * cannot cancel them. When the user prefers reduced motion the element simply
  * renders in place.
  *
+ * `initial` is serialised into the server HTML as an inline `opacity:0`, which
+ * means a reader with JavaScript disabled would get a page with blank bands
+ * where these sections should be. The `js-reveal` class is the escape hatch:
+ * globals.css forces it visible under `@media (scripting: none)`. That covers
+ * the no-JS case exactly without touching the scroll reveal for everyone else.
+ *
  * `viewport={{ once: true }}` means it animates the first time only — content
  * that re-animates every time you scroll past is exhausting to read.
  */
@@ -34,7 +40,7 @@ export function Reveal({
 
   return (
     <Component
-      className={cn(className)}
+      className={cn("js-reveal", className)}
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}

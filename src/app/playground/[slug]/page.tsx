@@ -53,7 +53,7 @@ export default async function DemoPage({ params }: PageProps<"/playground/[slug]
               href={meta.demoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full border border-rule-strong px-5 py-2 font-mono text-[0.72rem] uppercase tracking-[0.1em] transition-colors hover:border-accent hover:text-accent"
+              className="inline-flex min-h-11 items-center rounded-full border border-rule-strong px-5 py-2 font-mono text-[0.72rem] uppercase tracking-[0.1em] transition-colors hover:border-accent hover:text-accent lg:min-h-0"
             >
               Open full screen ↗
             </a>
@@ -62,7 +62,7 @@ export default async function DemoPage({ params }: PageProps<"/playground/[slug]
                 href={meta.repoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-rule-strong px-5 py-2 font-mono text-[0.72rem] uppercase tracking-[0.1em] transition-colors hover:border-accent hover:text-accent"
+                className="inline-flex min-h-11 items-center rounded-full border border-rule-strong px-5 py-2 font-mono text-[0.72rem] uppercase tracking-[0.1em] transition-colors hover:border-accent hover:text-accent lg:min-h-0"
               >
                 Source ↗
               </a>
@@ -76,7 +76,14 @@ export default async function DemoPage({ params }: PageProps<"/playground/[slug]
       <Canvas className="bg-accent-wash pb-14">
         <Zone zone="wide">
           <div className="overflow-hidden rounded-2xl border border-rule bg-white shadow-sm">
-            <LiveDemo src={meta.demoUrl} title={meta.title} className="h-[36rem] w-full" />
+            {/* 36rem is most of a phone screen, which turns the caption below into
+                a nested scroll trap. svh so a mobile browser's collapsing URL
+                bar cannot change the box mid-scroll. */}
+            <LiveDemo
+              src={meta.demoUrl}
+              title={meta.title}
+              className="h-[min(70svh,24rem)] w-full lg:h-[36rem]"
+            />
           </div>
           <p className="mt-3 font-mono text-[0.68rem] uppercase tracking-[0.12em] text-ink-faint">
             Running live from GitHub Pages · use it here or open it full screen
@@ -88,7 +95,7 @@ export default async function DemoPage({ params }: PageProps<"/playground/[slug]
         <Mdx source={body} />
       </Canvas>
 
-      <Canvas className="pb-24">
+      <Canvas className="pb-16 sm:pb-24">
         <Zone zone="wide">
           <Link href="/playground" className="font-mono text-sm text-ink-muted link-draw">
             ← All experiments

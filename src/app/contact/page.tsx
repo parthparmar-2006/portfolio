@@ -16,19 +16,30 @@ export const metadata = buildMetadata({
  * the address impossible to miss — and selectable, never a form.
  */
 export default function ContactPage() {
+  // Split once, here, so the address can break at the @ rather than mid-word.
+  const [local, domain] = profile.email.split("@");
+
   return (
     <div style={accentStyle("rust")}>
-      <Canvas className="bg-accent-wash pb-20 pt-16 sm:pt-24">
+      <Canvas className="bg-accent-wash pb-14 pt-11 sm:pb-20 sm:pt-24">
         <Zone zone="wide">
           <p className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-accent">
             Contact · the inbox is open
           </p>
 
+          {/* Two deliberate pieces here. The size reads through --fs-address so
+              the below-lg ramp in globals.css can replace the desktop clamp,
+              which sat pinned to its 1.9rem floor below 727px and so rendered
+              the address at the same size on a phone as on a small laptop. And
+              `break-all` snapped mid-word ("parthbparmar200 / 6@gmail.com"), so
+              the split is placed at the @ with a break opportunity instead. */}
           <a
             href={`mailto:${profile.email}`}
-            className="mt-6 block break-all font-display text-[clamp(1.9rem,5.5vw,4rem)] leading-[1.05] text-ink transition-colors hover:text-accent"
+            className="mt-6 block font-display text-[length:var(--fs-address)] leading-[1.1] text-ink transition-colors hover:text-accent lg:leading-[1.05]"
           >
-            {profile.email}
+            {local}
+            <wbr />
+            {`@${domain}`}
           </a>
 
           <div className="mt-8 max-w-[54ch] space-y-5 text-lg leading-relaxed text-ink-muted">
@@ -47,7 +58,7 @@ export default function ContactPage() {
         </Zone>
       </Canvas>
 
-      <Canvas className="pb-24 pt-14">
+      <Canvas className="pb-16 pt-10 sm:pb-24 sm:pt-14">
         <Zone zone="rail" className="mb-6 lg:mb-0 lg:pr-8 lg:text-right">
           <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-ink-faint">
             Elsewhere

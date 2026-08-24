@@ -127,6 +127,56 @@ were still on the old `Container` pattern, including `/writing` and `/playground
 - **Testimonials** into `src/data/testimonials.ts` (the section hides itself while empty).
 - Real repo/demo URLs (see blocking item 1).
 
+## Mobile & tablet pass — done 2026-08-24
+
+Desktop at >=1024px is unchanged by construction: every CSS change lives inside
+`@media (width < 64rem)` (Tailwind's exact `lg:` complement) and every class change is
+`base + lg:<today's value>`. Verified against a before/after capture at 1024/1280/1440.
+
+- **Type scale.** `@theme inline` does *not* emit `--text-*` as custom properties — it inlines the
+  declared value into the utility, so overriding them in a media query is a silent no-op. The four
+  display sizes now read through `--fs-hero/title/section/utility` on `:root` (the same indirection
+  `--accent` uses), which restores a real override point. The below-lg ramps share the intercept
+  `1.28rem` so each one lands on today's desktop value at 1024px: the 1023->1024 crossing moves by
+  <=0.03px. Home h1 at 375px went 41.6px -> 34.0px.
+- **`--margin-col` below lg** no longer collapses to 0. It absorbs whatever the viewport has spare
+  past `--measure`, so a 1023px tablet uses 983px of width instead of 694px with ~165px of dead
+  margin each side. Phones are unaffected (there is no spare width to absorb).
+- **`--gutter`** moved to `:root` so the header and footer pad by the same number as the page. They
+  used to use `px-6`, putting the wordmark 4px inboard of every h1 beneath it.
+- **Mobile nav** is complete: `/now`, `/stack` and `/links` were previously reachable on a phone
+  only through the footer. Plus scroll lock, Escape, outside click, focus trap, 44px rows.
+- **Mobile table of contents** (`<details>`) on both detail templates — a ten-section case study
+  had no in-page navigation at all below lg.
+- Touch targets >=44px below lg; home stats band redesigned to a real one-column baseline row;
+  `/stack` group blurbs now shown on mobile; `/contact` address breaks at the `@`, not mid-word;
+  playground previews use `aspect-[1280/900]` (a hardcoded `h-64` was clipping 39% at 640px and
+  half at 768px); table scroll wrapper, `overscroll-behavior-x` on `<pre>`, `overflow-wrap` on
+  inline code; corrected image `sizes`.
+
+**Two real bugs found and fixed while measuring, both pre-existing:**
+
+1. `TileCard`'s panel text is `whitespace-nowrap` by design (it bleeds off the right edge), but in
+   flow it gave the card a ~443px min-content width. A grid item's default `min-width: auto`
+   resolves to exactly that, so **the home page scrolled sideways on every phone** — 461px of
+   content in a 375px viewport. The span is now absolutely positioned, so it contributes nothing to
+   intrinsic sizing and `overflow-hidden` still clips it identically. Note `min-width: 0` does NOT
+   fix this: it sets a floor on the contribution, not a cap.
+2. `template.tsx` and `Reveal` serialise motion's `initial={{opacity:0}}` into the SSR HTML. If the
+   motion runtime never runs, the page (or whole sections of it) stays **invisible**, not merely
+   unanimated. `template.tsx` now carries a CSS `route-fade` animation that ends at opacity 1 — CSS
+   animations outrank inline styles, so it wins on its own — and both carry a `@media (scripting:
+   none)` fallback.
+
+Verification: a same-origin harness sweeping **13 routes x 8 widths (320-1023px) = 104 pairs**
+asserts `scrollWidth === clientWidth`. All 104 clean. Print layout re-rendered to PDF and unchanged.
+
+> Measuring note for whoever picks this up: an iframe probe whose parent tab is backgrounded never
+> finishes hydration, so it reports `loading.tsx`'s skeleton, not the page. Computed *font sizes*
+> are still valid there (CSS resolves in `display:none` subtrees); box geometry is not. Headless
+> Chromium on Windows also clamps its window to ~490 CSS px, so true phone widths need an iframe
+> wrapper — and `Reveal` content does not render inside one.
+
 ## Not done
 
 - Lighthouse run and an axe pass

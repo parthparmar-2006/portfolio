@@ -36,7 +36,7 @@ export default function PlaygroundPage() {
         </Zone>
       </Canvas>
 
-      <Canvas className="pb-24 pt-12">
+      <Canvas className="pb-16 pt-8 sm:pb-24 sm:pt-12">
         <Zone zone="wide">
           <ul className="grid gap-8">
             {demos.map((demo) => (
@@ -51,7 +51,11 @@ export default function PlaygroundPage() {
                         down, rather than being squeezed — at card width these
                         pages render their narrow layout, which is not what the
                         project actually looks like. */}
-                    <div className="relative h-64 overflow-hidden border-b border-rule bg-white lg:h-auto lg:border-b-0 lg:border-r">
+                    {/* Ratio, not a fixed height. DemoPreview scales a 1280x900 iframe by
+                        100cqw/1280, so the rendered height is always width/1.422 —
+                        against a hardcoded h-64 that clipped the bottom 39% of the
+                        preview at 640px and half of it at 768px. */}
+                    <div className="relative aspect-[1280/900] overflow-hidden border-b border-rule bg-white lg:aspect-auto lg:h-auto lg:border-b-0 lg:border-r">
                       <DemoPreview src={demo.demoUrl} title={`${demo.title} — preview`} />
                       <span className="absolute right-3 top-3 rounded-full border border-rule bg-ground/85 px-3 py-1 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-ink-muted backdrop-blur-sm">
                         Live
